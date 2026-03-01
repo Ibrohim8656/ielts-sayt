@@ -226,7 +226,7 @@ function finishTest() {
         if (window.location.pathname.includes('listening')) section = "Listening";
         else if (window.location.pathname.includes('reading')) section = "Reading";
 
-        fetch('http://localhost:3000/api/score', {
+        fetch('/api/score', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -257,7 +257,7 @@ function closeModalWindow() {
 // ==========================================
 // AUTHENTICATION & PROFILE LOGIC (API)
 // ==========================================
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 
 // 1. Update Header based on Auth State
 function updateHeader() {
