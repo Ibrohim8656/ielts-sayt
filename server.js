@@ -6,7 +6,7 @@ const path = require('path');
 const db = require('./db');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const SECRET_KEY = 'ielts_practice_secret_key_123'; // In production, use environment variables
 
 app.use(cors());
