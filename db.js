@@ -25,7 +25,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
             // Seed Admin User
             const adminPhone = 'admin';
             const adminPass = '123parol123';
-            const bcrypt = require('bcrypt');
+            const bcrypt = require('bcryptjs');
 
             db.get('SELECT * FROM users WHERE phone = ?', [adminPhone], async (err, row) => {
                 if (!row) {
