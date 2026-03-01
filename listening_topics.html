@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Listening - Topics</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .topics-header {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .topic-card {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-decoration: none;
+            color: var(--text-main);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 5px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-card h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .topic-card .meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .start-btn {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="home-body">
+
+    <!-- Navbar -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <!-- Auth Nav will be injected here by script.js -->
+        </div>
+    </header>
+
+    <main class="home-container">
+        <div class="topics-header">
+            <h2>Listening Practice Tests</h2>
+            <p>O'zingiz xohlagan mavzuni tanlang va IELTS Listening mashqini boshlang</p>
+        </div>
+
+        <div class="topics-grid" id="topics-container">
+            <!-- Mavzular JavaScript orqali shu yerga qo'shiladi -->
+        </div>
+    </main>
+
+    <script src="test_data.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('topics-container');
+            if (typeof LISTENING_TEST_DATA !== 'undefined') {
+                for (const [id, data] of Object.entries(LISTENING_TEST_DATA)) {
+                    const card = document.createElement('a');
+                    card.href = `listening.html?id=${id}`;
+                    card.className = "topic-card";
+                    card.innerHTML = `
+                        <div>
+                            <h3>${data.title}</h3>
+                            <div class="meta">Manba: ${data.source.toUpperCase()} | 10 Questions</div>
+                        </div>
+                        <div class="start-btn">Mashqni boshlash ➔</div>
+                    `;
+                    container.appendChild(card);
+                }
+            } else {
+                container.innerHTML = "<p>Ma'lumotlar topilmadi.</p>";
+            }
+        });
+    </script>
+</body>
+
+</html>

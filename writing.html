@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Writing - Practice</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <div class="header-controls">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <div class="timer" id="timer-display">
+                ⏱ <span id="time-text">60:00</span>
+            </div>
+            <button class="btn-primary" id="submit-btn" onclick="finishTest()">Yakunlash</button>
+        </div>
+    </header>
+
+    <main class="split-container">
+        <!-- Chap Tomon - Task -->
+        <section class="pane left-pane">
+            <div class="passage-content">
+                <h2>Writing Task 2</h2>
+                <p><strong>You should spend about 40 minutes on this task.</strong></p>
+                <p>Write about the following topic:</p>
+
+                <div
+                    style="background:var(--bg-color); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--primary-color);">
+                    <p style="font-weight: 600; font-size: 1.15rem;">Some people believe that unpaid community service
+                        should be a compulsory part of high school programs.</p>
+                    <p style="font-weight: 600; font-size: 1.15rem;">To what extent do you agree or disagree?</p>
+                </div>
+
+                <p>Give reasons for your answer and include any relevant examples from your own knowledge or experience.
+                </p>
+                <p><strong>Write at least 250 words.</strong></p>
+            </div>
+        </section>
+
+        <!-- O'ng Tomon - Editor -->
+        <section class="pane right-pane">
+            <div class="questions-header">
+                <h3>Your Answer</h3>
+                <p>Type your essay below. Word count is calculated automatically.</p>
+            </div>
+
+            <div class="question-block" style="padding: 0; box-shadow: none; border: none; background: transparent;">
+                <textarea id="writing_answer"
+                    style="width: 100%; height: 500px; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; font-size: 1.05rem; line-height: 1.6; resize: vertical; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);"
+                    placeholder="Start typing your essay here..."></textarea>
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 0 5px;">
+                    <p id="word_count" style="font-weight: 600; color: var(--text-muted); font-size: 1.1rem;">Words:
+                        <span id="wc_number" style="color: var(--text-main);">0</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for student name -->
+    <div class="modal-overlay" id="submit-modal">
+        <div class="modal-content">
+            <h2>Send Answer</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Your essay will be sent directly to your teacher's
+                Telegram.</p>
+
+            <div class="input-group">
+                <label for="student_name">Full Name</label>
+                <input type="text" id="student_name" placeholder="E.g. Alisher Karimov" required>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn-primary" style="background: #e2e8f0; color: #334155;"
+                    onclick="closeSubmitModal()">Cancel</button>
+                <button class="btn-primary" id="final-submit-btn" onclick="sendToTelegram()">Send to Teacher</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for student name -->
+    <div class="modal-overlay" id="submit-modal">
+        <div class="modal-content">
+            <h2>Send Answer</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Your essay will be sent directly to your teacher's
+                Telegram.</p>
+
+            <div class="input-group">
+                <label for="student_name">Full Name</label>
+                <input type="text" id="student_name" placeholder="E.g. Alisher Karimov" required>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn-primary" style="background: #e2e8f0; color: #334155;"
+                    onclick="closeSubmitModal()">Cancel</button>
+                <button class="btn-primary" id="final-submit-btn" onclick="sendToTelegram()">Send to Teacher</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Oddiy Word count
+        const textarea = document.getElementById('writing_answer');
+        const countSpan = document.getElementById('wc_number');
+
+        textarea.addEventListener('input', function () {
+            let text = this.value.trim();
+            let count = text === '' ? 0 : text.split(/\s+/).length;
+            countSpan.textContent = count;
+
+            if (count >= 250) {
+                countSpan.style.color = "var(--success-color)";
+            } else {
+                countSpan.style.color = "var(--text-main)";
+            }
+        });
+
+        // 60 min Taymer
+        let wTotalSeconds = 60 * 60;
+        const wTimeText = document.getElementById("time-text");
+        setInterval(() => {
+            if (wTotalSeconds <= 0) return;
+            let m = Math.floor(wTotalSeconds / 60);
+            let s = wTotalSeconds % 60;
+            wTimeText.textContent = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+            wTotalSeconds--;
+        }, 1000);
+
+        // Modal Funksiyalari
+        function openSubmitModal() {
+            let text = textarea.value.trim();
+            if (text.length < 50) {
+                alert("Please write at least a few sentences before submitting!");
+                return;
+            }
+            document.getElementById('submit-modal').classList.add('active');
+        }
+
+        function closeSubmitModal() {
+            document.getElementById('submit-modal').classList.remove('active');
+        }
+
+        // Telegramga yuborish
+        function sendToTelegram() {
+            const studentName = document.getElementById('student_name').value.trim();
+            const essayText = document.getElementById('writing_answer').value.trim();
+            const wordCount = document.getElementById('wc_number').textContent;
+
+            if (!studentName) {
+                alert("Please enter your name!");
+                return;
+            }
+
+            const sendBtn = document.getElementById('final-submit-btn');
+            sendBtn.innerHTML = '<span class="loader"></span> Sending...';
+            sendBtn.disabled = true;
+
+            // Xat Formati
+            const message = `🎓 *Yangi Insho (Writing Task)*\n\n👤 *O'quvchi:* ${studentName}\n📝 *Word Count:* ${wordCount} words\n\n📜 *Insho:* \n${essayText}`;
+
+            // API ga jo'natish
+            const BOT_TOKEN = "8632543520:AAF8lMWGCwI9iFogYGsQMnUt4iwyVj7G0A4";
+            const CHAT_ID = "935349418";
+
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: "Markdown"
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        alert('Successfully submitted to your teacher!');
+                        closeSubmitModal();
+                        sendBtn.innerHTML = 'Send to Teacher';
+                        sendBtn.disabled = false;
+                        document.getElementById('submit-btn').textContent = "Submitted ✓";
+                        document.getElementById('submit-btn').disabled = true;
+                    } else {
+                        alert('Error sending message. Please try again.');
+                        sendBtn.innerHTML = 'Send to Teacher';
+                        sendBtn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    alert('Network error.');
+                    sendBtn.innerHTML = 'Send to Teacher';
+                    sendBtn.disabled = false;
+                });
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-body">
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:white; text-decoration:none;">IELTS Mashg'ulotlari</a></h1>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card">
+            <h2>Tizimga kirish</h2>
+            <p>IELTS mashg'ulotlarini davom ettirish uchun kiring.</p>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-phone">Telefon raqam</label>
+                    <input type="tel" id="login-phone" placeholder="+998901234567" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Parol</label>
+                    <input type="password" id="login-password" placeholder="Parolni kiriting" required>
+                </div>
+
+                <div id="login-error" class="error-msg"></div>
+
+                <button type="submit" class="auth-btn">Kirish</button>
+            </form>
+
+            <div class="auth-links">
+                <p>Hisobingiz yo'qmi? <a href="register.html">Ro'yxatdan o'tish</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

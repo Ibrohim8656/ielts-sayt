@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-color);
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .admin-header h2 {
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .user-card {
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .user-card-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .user-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .user-phone {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .admin-score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dotted var(--border-color);
+        }
+
+        .admin-score-item:last-child {
+            border-bottom: none;
+        }
+
+        .admin-score-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-score-section {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .admin-score-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .admin-score-result {
+            font-weight: 700;
+            color: var(--primary-color);
+            background: #eff6ff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .no-records {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px;
+            grid-column: 1 / -1;
+            background: var(--surface-color);
+            border-radius: 12px;
+        }
+    </style>
+</head>
+
+<body class="profile-body">
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <nav class="auth-nav">
+            <button id="logout-btn" class="nav-btn logout">Chiqish</button>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <div class="admin-header">
+            <h2>👨‍🏫 O'qituvchi Boshqaruvi (Admin)</h2>
+            <div id="total-students">O'quvchilar: Yuklanmoqda...</div>
+        </div>
+
+        <div class="users-grid" id="users-grid">
+            <div class="no-records">Ma'lumotlar yuklanmoqda...</div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('userRole');
+
+            // Protect Admin Route
+            if (!token || role !== 'admin') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error('Failed to fetch admin data');
+
+                const users = await res.json();
+                const usersGrid = document.getElementById('users-grid');
+                document.getElementById('total-students').textContent = `Jami O'quvchilar: ${users.length}`;
+
+                usersGrid.innerHTML = '';
+
+                if (users.length === 0) {
+                    usersGrid.innerHTML = '<div class="no-records">Hali hech kim ro\'yxatdan o\'tmagan.</div>';
+                    return;
+                }
+
+                users.forEach(user => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+
+                    let scoresHtml = '';
+                    if (user.scores && user.scores.length > 0) {
+                        user.scores.forEach(score => {
+                            const date = new Date(score.date).toLocaleString('uz-UZ', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                            const percent = Math.round((score.correct / score.total) * 100);
+                            scoresHtml += `
+                                <div class="admin-score-item">
+                                    <div class="admin-score-details">
+                                        <span class="admin-score-section">${score.section}</span>
+                                        <span class="admin-score-date">${date}</span>
+                                    </div>
+                                    <div class="admin-score-result">${score.correct}/${score.total} (${percent}%)</div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        scoresHtml = '<div style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px 0;">Hali test ishlamagan</div>';
+                    }
+
+                    card.innerHTML = `
+                        <div class="user-card-header">
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-phone">📞 ${user.phone}</div>
+                        </div>
+                        <div class="user-scores-list">
+                            <strong style="display:block; margin-bottom:10px; font-size:0.9rem; color:var(--text-main);">Oxirgi Natijalar:</strong>
+                            ${scoresHtml}
+                        </div>
+                    `;
+                    usersGrid.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('users-grid').innerHTML = '<div class="no-records">Ma\'lumotlarni yuklashda xatolik yuz berdi. Sizda admin huquqi yo\'q bo\'lishi mumkin.</div>';
+            }
+        });
+    </script>
+</body>
+
+</html>

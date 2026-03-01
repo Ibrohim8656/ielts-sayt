@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="home-body">
+
+    <!-- Navbar -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <!-- Auth Nav will be injected here by script.js -->
+        </div>
+    </header>
+
+    <!-- Asosiy Qism -->
+    <main class="home-container">
+        <div class="home-hero">
+            <h2>Welcome to IELTS Practice</h2>
+            <p>Choose a section below to start practicing for your IELTS exam.</p>
+        </div>
+
+        <div class="cards-grid">
+            <!-- Listening Card -->
+            <a href="listening_topics.html" class="section-card listening-card">
+                <div class="card-icon">🎧</div>
+                <h3>Listening</h3>
+                <p>O'zingizga yoqqan mavzuni tanlab Listening mashqini bajaring.</p>
+            </a>
+
+            <!-- Reading Card -->
+            <a href="reading_topics.html" class="section-card reading-card">
+                <div class="card-icon">📖</div>
+                <h3>Reading</h3>
+                <p>O'zingizga yoqqan mavzuni tanlab Reading mashqini bajaring.</p>
+            </a>
+
+            <!-- Writing Card -->
+            <a href="writing.html" class="section-card writing-card">
+                <div class="card-icon">✍️</div>
+                <h3>Writing</h3>
+                <p>Practice Task 1 and Task 2 with a specialized text editor.</p>
+            </a>
+
+            <!-- Speaking Card -->
+            <a href="speaking.html" class="section-card speaking-card">
+                <div class="card-icon">🗣️</div>
+                <h3>Speaking</h3>
+                <p>Get familiar with Speaking parts 1, 2, and 3 questions.</p>
+            </a>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

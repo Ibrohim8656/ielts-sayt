@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Listening - Practice</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <div class="header-controls">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <div class="timer" id="timer-display">
+                ⏱ <span id="time-text">30:00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Asosiy Ekran -->
+    <main class="split-container">
+
+        <!-- Chap Tomon - Audio Pleyer va Matn -->
+        <section class="pane left-pane" style="flex: 0.6; overflow-y: auto;">
+            <div class="passage-content">
+                <!-- DINAMIK AUDIO VA MATN SHU YERGA TUSHADI -->
+            </div>
+        </section>
+
+        <!-- O'ng Tomon - Savollar qismi -->
+        <section class="pane right-pane" style="flex: 1.4; overflow-y: auto;">
+            <!-- DINAMIK SAVOLLAR SHU YERGA TUSHADI -->
+        </section>
+        </section>
+    </main>
+
+    <!-- Natijani ko'rsatish Modal (Eski) -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <h2>Test Completed!</h2>
+            <div class="score-display">
+                <span id="correct-count">0</span>/<span id="total-count">3</span>
+            </div>
+            <p>Check your provided answers below.</p>
+            <button class="btn-primary" onclick="closeModalWindow()">Close</button>
+        </div>
+    </div>
+
+    <!-- Mantiqiy ishlov (JavaScript) -->
+    <script src="test_data.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

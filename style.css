@@ -1,0 +1,797 @@
+/* Baza Sozlamalari */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --bg-color: #f8fafc;
+    --surface-color: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --success-color: #22c55e;
+    --success-bg: #f0fdf4;
+    --error-color: #ef4444;
+    --error-bg: #fef2f2;
+    --header-height: 70px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+}
+
+body:not(.home-body) {
+    overflow: hidden;
+    /* Home dan tashqari */
+}
+
+.home-body {
+    overflow: auto;
+}
+
+/* Yuoqri Navigatsiya */
+.app-header {
+    height: var(--header-height);
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.brand h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.back-link {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+/* Home Sahifa - Cards Grid */
+.home-container {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 30px;
+}
+
+.home-hero {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.home-hero h2 {
+    font-size: 2.5rem;
+    color: var(--text-main);
+    margin-bottom: 15px;
+}
+
+.home-hero p {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.section-card {
+    background: var(--surface-color);
+    padding: 40px 30px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: var(--text-main);
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: var(--primary-color);
+}
+
+.card-icon {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+}
+
+.section-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+}
+
+.section-card p {
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* Test elementlari - Timer & Buttons */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.timer {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+    background: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timer.warning {
+    color: var(--error-color);
+    background: #fef2f2;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0.7;
+    }
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Split View - Ikkiga bo'lingan ekran */
+.split-container {
+    display: flex;
+    height: calc(100vh - var(--header-height));
+    width: 100vw;
+}
+
+.pane {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
+    scroll-behavior: smooth;
+}
+
+.left-pane {
+    background-color: var(--surface-color);
+    border-right: 2px solid var(--border-color);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #334155;
+}
+
+.passage-content h2 {
+    color: var(--text-main);
+    font-size: 1.8rem;
+    margin-bottom: 24px;
+    line-height: 1.3;
+}
+
+.passage-content p {
+    margin-bottom: 20px;
+    text-align: justify;
+}
+
+.right-pane {
+    background-color: #f8fafc;
+}
+
+.questions-header {
+    background: var(--surface-color);
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Savollar qutisi */
+.question-block {
+    background: var(--surface-color);
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    border: 1px solid transparent;
+}
+
+.question-block>p {
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--text-main);
+}
+
+/* Option Inputs */
+.option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--surface-color);
+}
+
+.option:hover {
+    background: #f1f5f9;
+}
+
+.option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.inline-input {
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    background: transparent;
+    padding: 4px 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    width: 150px;
+    text-align: center;
+}
+
+.inline-input:focus {
+    outline: none;
+    border-bottom-color: var(--primary-color);
+}
+
+/* === YANGI NATIJA KORINISHI (mini-ielts stilida) === */
+.feedback-box {
+    margin-top: 15px;
+    border-radius: 8px;
+    padding: 15px;
+    font-size: 0.95rem;
+    display: none;
+    /* JS yordamida ko'rsatiladi */
+}
+
+.feedback-box.correct {
+    display: block;
+    background-color: var(--success-bg);
+    border-left: 4px solid var(--success-color);
+    color: #166534;
+}
+
+.feedback-box.wrong {
+    display: block;
+    background-color: var(--error-bg);
+    border-left: 4px solid var(--error-color);
+    color: #991b1b;
+}
+
+.feedback-title {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.feedback-solution {
+    margin-top: 8px;
+    font-weight: 600;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.option.checked-correct {
+    border-color: var(--success-color) !important;
+    background-color: var(--success-bg) !important;
+}
+
+.option.checked-wrong {
+    border-color: var(--error-color) !important;
+    background-color: var(--error-bg) !important;
+}
+
+.inline-input.checked-correct {
+    border-bottom-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.inline-input.checked-wrong {
+    border-bottom-color: var(--error-color);
+    color: var(--error-color);
+    text-decoration: line-through;
+}
+
+/* Modal oyna */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--surface-color);
+    width: 90%;
+    max-width: 500px;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.score-display {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 20px 0;
+}
+
+/* === TELEGRAM UCHUN MODAL (Ism so'rash va Yuklash) === */
+.input-group {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.2s;
+}
+
+.input-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.loader {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* === AUTH & PROFILE STYLES === */
+.auth-body,
+.profile-body {
+    background-color: #f8fafc;
+}
+
+.auth-container {
+    max-width: 450px;
+    margin: 80px auto;
+    padding: 0 20px;
+}
+
+.auth-card {
+    background: var(--surface-color);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.auth-card h2 {
+    color: var(--text-main);
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+.auth-card p {
+    color: var(--text-muted);
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.2s;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 10px;
+}
+
+.auth-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.auth-links {
+    margin-top: 25px;
+    font-size: 0.95rem;
+}
+
+.auth-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.error-msg {
+    color: var(--error-color);
+    font-size: 0.9rem;
+    min-height: 20px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.profile-container {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    background: var(--surface-color);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+}
+
+.profile-avatar {
+    font-size: 4rem;
+    margin-right: 25px;
+    background: #e2e8f0;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.profile-info h2 {
+    font-size: 2rem;
+    color: var(--text-main);
+    margin-bottom: 5px;
+}
+
+.profile-info p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.scores-section {
+    background: var(--surface-color);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.scores-section h3 {
+    font-size: 1.5rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.score-item:last-child {
+    border-bottom: none;
+}
+
+.score-details {
+    flex: 1;
+    text-align: left;
+}
+
+.score-section-name {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 1.1rem;
+}
+
+.score-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.score-result {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    background: #eff6ff;
+    padding: 5px 15px;
+    border-radius: 20px;
+}
+
+.auth-nav {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.nav-btn {
+    text-decoration: none;
+    color: var(--text-main);
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.nav-btn:hover {
+    background: #f1f5f9;
+    color: var(--primary-color);
+}
+
+.nav-btn.primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.nav-btn.primary:hover {
+    background: var(--primary-hover);
+}
+
+.nav-btn.logout {
+    color: var(--error-color);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+}
+
+.nav-btn.logout:hover {
+    background: #fef2f2;
+}
+
+
+/* === NIGHT MODE STYLES === */
+body.dark-mode {
+    --bg-color: #0f172a;
+    --surface-color: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    background-color: var(--bg-color);
+}
+
+body.dark-mode .app-header {
+    background-color: var(--surface-color);
+}
+
+body.dark-mode .nav-btn {
+    color: var(--text-main);
+}
+
+body.dark-mode .nav-btn:hover {
+    background-color: #334155;
+}
+
+body.dark-mode .section-card {
+    background: var(--surface-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .section-card:hover {
+    background: #2a3a54;
+}
+
+body.dark-mode .left-pane,
+body.dark-mode .pane,
+body.dark-mode .passage-content {
+    background-color: var(--surface-color);
+    color: var(--text-main);
+    border-right-color: var(--border-color);
+}
+
+body.dark-mode .right-pane {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .passage-content h2,
+body.dark-mode .passage-content h3,
+body.dark-mode .passage-content p {
+    color: var(--text-main);
+}
+
+body.dark-mode .question-block,
+body.dark-mode .questions-header {
+    background: var(--surface-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .option,
+body.dark-mode .inline-input {
+    background: #0f172a;
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .option:hover {
+    background: #334155;
+}
+
+body.dark-mode .auth-card,
+body.dark-mode .profile-header,
+body.dark-mode .scores-section,
+body.dark-mode .user-card,
+body.dark-mode .admin-header {
+    background: var(--surface-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .input-group input {
+    background: #0f172a;
+    color: white;
+    border-color: var(--border-color);
+}
+
+body.dark-mode .modal-content {
+    background: var(--surface-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .auth-body,
+body.dark-mode .profile-body {
+    background-color: var(--bg-color);
+}
+
+body.dark-mode .score-result,
+body.dark-mode .admin-score-result {
+    background: #0f172a;
+    color: #60a5fa;
+}
+
+body.dark-mode .timer {
+    background: #334155;
+    color: var(--text-main);
+}
+
+body.dark-mode .profile-avatar {
+    background: #334155;
+}
+
+body.dark-mode .admin-score-item {
+    border-bottom-color: var(--border-color);
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 15px;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.theme-toggle:hover {
+    background: var(--border-color);
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - Mening Profilim</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="profile-body">
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:white; text-decoration:none;">IELTS Mashg'ulotlari</a></h1>
+        </div>
+        <div style="display:flex; align-items:center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <nav class="auth-nav">
+                <button id="logout-btn" class="nav-btn logout">Chiqish</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-info">
+                <h2 id="profile-name">Yuklanmoqda...</h2>
+                <p id="profile-phone">Yuklanmoqda...</p>
+            </div>
+        </div>
+
+        <div class="scores-section">
+            <h3>Mening Natijalarim</h3>
+
+            <div class="scores-list" id="scores-container">
+                <p class="loading-msg">Natijalar yuklanmoqda...</p>
+                <!-- Scores will be injected here via JS -->
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // Check if user is logged in before rendering profile
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('token')) {
+                window.location.href = 'login.html';
+            } else {
+                fetchProfileData();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - O'zbekiston</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Yuqori qism (Navigatsiya va Taymer) -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <div class="header-controls">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <div class="timer" id="timer-display">
+                ⏱ <span id="time-text">20:00</span>
+            </div>
+            <button class="btn-primary" id="submit-btn" onclick="finishTest()">Yakunlash</button>
+        </div>
+    </header>
+
+    <!-- Asosiy Ekran -->
+    <main class="split-container">
+
+        <!-- Chap Tomon - Matn yoziladigan qism -->
+        <section class="pane left-pane">
+            <!-- ============================================== -->
+            <!-- === READING MATNI SHU YERGA DINAMIK TUSHADI == -->
+            <!-- ============================================== -->
+            <div class="passage-content">
+                <p style="text-align:center; padding: 50px; color: var(--text-muted);">Yuklanmoqda...</p>
+            </div>
+            <!-- ============================================== -->
+            <!-- === MATN TUGASHI ============================= -->
+            <!-- ============================================== -->
+        </section>
+
+        <!-- O'ng Tomon - Savollar qismi -->
+        <section class="pane right-pane">
+            <p style="text-align:center; padding: 50px; color: var(--text-muted);">Savollar yuklanmoqda...</p>
+        </section>
+    </main>
+
+    <!-- Natijani ko'rsatish oynasi (Modal) -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <h2>Test Yakunlandi!</h2>
+            <div class="score-display">
+                <span id="correct-count">0</span>/<span id="total-count">13</span>
+            </div>
+            <p>Sizning natijangiz shu bo'ldi. Dasturda xatolar va to'g'ri javoblarni ko'rib chiqishingiz mumkin.</p>
+            <button class="btn-primary" onclick="closeModalWindow()">Yopish va ko'rib chiqish</button>
+        </div>
+    </div>
+
+    <!-- Mantiqiy ishlov (JavaScript) -->
+    <script src="test_data.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

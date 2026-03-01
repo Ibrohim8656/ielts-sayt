@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - Ro'yxatdan o'tish</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-body">
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:white; text-decoration:none;">IELTS Mashg'ulotlari</a></h1>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card">
+            <h2>Ro'yxatdan o'tish</h2>
+            <p>Yangi o'quvchi profilini yaratish uchun ma'lumotlarni kiriting.</p>
+
+            <form id="register-form">
+                <div class="input-group">
+                    <label for="reg-name">Ism va familiya</label>
+                    <input type="text" id="reg-name" placeholder="Masalan: Alisher Navoiy" required>
+                </div>
+                <div class="input-group">
+                    <label for="reg-phone">Telefon raqam</label>
+                    <input type="tel" id="reg-phone" placeholder="+998901234567" required>
+                </div>
+                <div class="input-group">
+                    <label for="reg-password">Parol</label>
+                    <input type="password" id="reg-password" placeholder="Parol o'ylab toping" required minlength="6">
+                </div>
+
+                <div id="reg-error" class="error-msg"></div>
+
+                <button type="submit" class="auth-btn">Ro'yxatdan o'tish</button>
+            </form>
+
+            <div class="auth-links">
+                <p>Allaqachon hisobingiz bormi? <a href="login.html">Tizimga kirish</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
