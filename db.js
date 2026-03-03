@@ -54,8 +54,7 @@ const query = (sql, params = []) => {
             }
 
             // Adjust Data Types for Postgres explicitly in create table commands
-            pgSql = pgSql.replace(/AUTOINCREMENT/gi, 'SERIAL');
-            pgSql = pgSql.replace(/INTEGER PRIMARY KEY/gi, 'SERIAL PRIMARY KEY');
+            pgSql = pgSql.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY');
 
             // Postgres pool.query fails if params is undefined, but [] is perfectly fine.
             pool.query(pgSql, params || [], (err, result) => {
@@ -94,7 +93,7 @@ const initSchema = async () => {
     try {
         // Users Table
         await query(`CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(255) NOT NULL,
             phone VARCHAR(20) UNIQUE NOT NULL,
             password TEXT NOT NULL,
