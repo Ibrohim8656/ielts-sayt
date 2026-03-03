@@ -44,21 +44,30 @@ const query = (sql, params = []) => {
             // Translate "?" in sql to "$1", "$2", etc for PG
             let pgSql = sql;
             let counter = 1;
-            while (pgSql.includes('?')) {
-                pgSql = pgSql.replace('?', `$${counter++}`);
+
+            // Only replace ? when they are outside of quotes if we wanted to be perfectly safe,
+            // but for our simple queries indexOf is fine. However we must only replace parameters we actually supply!
+            if (params && params.length > 0) {
+                while (pgSql.includes('?')) {
+                    pgSql = pgSql.replace('?', `$${counter++}`);
+                }
             }
 
             // Adjust Data Types for Postgres explicitly in create table commands
             pgSql = pgSql.replace(/AUTOINCREMENT/gi, 'SERIAL');
             pgSql = pgSql.replace(/INTEGER PRIMARY KEY/gi, 'SERIAL PRIMARY KEY');
 
-            pool.query(pgSql, params, (err, result) => {
-                if (err) reject(err);
+            // Postgres pool.query fails if params is undefined, but [] is perfectly fine.
+            pool.query(pgSql, params || [], (err, result) => {
+                if (err) {
+                    console.error('PostgreSQL Execution Error:', err.message, '\nQuery:', pgSql, '\nParams:', params);
+                    return reject(err);
+                }
                 // Unified standard response: { rows: [...], lastID: result.insertId }
-                else resolve({
-                    rows: result.rows,
-                    // Postgres has rows[0].id if RETURNING id was used, otherwise best effort.
-                    lastID: result.rows.length ? result.rows[0].id : null
+                resolve({
+                    rows: result.rows || [],
+                    // Postgres typically requires RETURNING id. Since we don't have it uniformly, return null safely.
+                    lastID: (result.rows && result.rows.length) ? result.rows[0].id : null
                 });
             });
         } else {
@@ -66,12 +75,12 @@ const query = (sql, params = []) => {
             const isSelect = sql.trim().toUpperCase().startsWith('SELECT');
 
             if (isSelect) {
-                sqliteDb.all(sql, params, (err, rows) => {
+                sqliteDb.all(sql, params || [], (err, rows) => {
                     if (err) reject(err);
                     else resolve({ rows });
                 });
             } else {
-                sqliteDb.run(sql, params, function (err) {
+                sqliteDb.run(sql, params || [], function (err) {
                     if (err) reject(err);
                     else resolve({ rows: [], lastID: this.lastID });
                 });
@@ -85,7 +94,7 @@ const initSchema = async () => {
     try {
         // Users Table
         await query(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             phone VARCHAR(20) UNIQUE NOT NULL,
             password TEXT NOT NULL,

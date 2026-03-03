@@ -53,7 +53,8 @@ app.post('/api/login', async (req, res) => {
         const token = jwt.sign({ id: user.id, name: user.name, phone: user.phone, role: user.role }, SECRET_KEY, { expiresIn: '7d' });
         res.json({ message: 'Login successful', token, name: user.name, role: user.role });
     } catch (err) {
-        res.status(500).json({ error: 'Database error' });
+        console.error('Login database error:', err);
+        res.status(500).json({ error: 'Database error', details: err.message });
     }
 });
 
