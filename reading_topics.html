@@ -91,20 +91,66 @@
     <script src="script.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const container = document.getElementById('topics-container');
+
+            // 1. Fetch user scores
+            let completedScores = {};
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const res = await fetch('/api/profile', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        // store latest score per section
+                        data.scores.forEach(s => {
+                            if (!completedScores[s.section]) {
+                                completedScores[s.section] = s;
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("Could not fetch user scores", e);
+                }
+            }
+
+            // 2. Render Topics
             if (typeof TEST_DATA !== 'undefined') {
                 for (const [id, data] of Object.entries(TEST_DATA)) {
+                    const sectionName = `Reading: ${data.title}`;
+                    const existingScore = completedScores[sectionName];
+
                     const card = document.createElement('a');
-                    card.href = `reading.html?id=${id}`;
                     card.className = "topic-card";
-                    card.innerHTML = `
-                        <div>
-                            <h3>${data.title}</h3>
-                            <div class="meta">Manba: ${data.source.toUpperCase()} | 13+ Questions</div>
-                        </div>
-                        <div class="start-btn">Mashqni boshlash ➔</div>
-                    `;
+
+                    if (existingScore) {
+                        const percent = Math.round((existingScore.correct / existingScore.total) * 100);
+                        card.href = "javascript:void(0)";
+                        card.onclick = () => alert(`Siz bu testni ishlagansiz!\n\nNatija: ${existingScore.correct}/${existingScore.total} (${percent}%)`);
+                        card.style.opacity = "0.7";
+                        card.style.borderLeftColor = "var(--success-color)";
+
+                        card.innerHTML = `
+                            <div>
+                                <h3>${data.title} <span style="font-size:0.9rem; color:var(--success-color);">✓ Bajarilgan</span></h3>
+                                <div class="meta">Manba: ${data.source.toUpperCase()} | 13+ Questions</div>
+                            </div>
+                            <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                Natija: ${existingScore.correct}/${existingScore.total} (${percent}%)
+                            </div>
+                        `;
+                    } else {
+                        card.href = `reading.html?id=${id}`;
+                        card.innerHTML = `
+                            <div>
+                                <h3>${data.title}</h3>
+                                <div class="meta">Manba: ${data.source.toUpperCase()} | 13+ Questions</div>
+                            </div>
+                            <div class="start-btn">Mashqni boshlash ➔</div>
+                        `;
+                    }
                     container.appendChild(card);
                 }
             } else {

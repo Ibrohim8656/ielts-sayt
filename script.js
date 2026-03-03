@@ -223,8 +223,23 @@ function finishTest() {
     if (token) {
         // Find which section this is by looking at the page title or filename
         let section = "Practice Test";
-        if (window.location.pathname.includes('listening')) section = "Listening";
-        else if (window.location.pathname.includes('reading')) section = "Reading";
+        const urlParams = new URLSearchParams(window.location.search);
+        let testId = urlParams.get('id');
+
+        if (window.location.pathname.includes('listening')) {
+            if (!testId || (typeof LISTENING_TEST_DATA !== 'undefined' && !LISTENING_TEST_DATA[testId])) {
+                testId = "theatre_trip_munich"; // match default in dynamic setup
+            }
+            const title = (typeof LISTENING_TEST_DATA !== 'undefined' && LISTENING_TEST_DATA[testId]) ? LISTENING_TEST_DATA[testId].title : "Test";
+            section = `Listening: ${title}`;
+        }
+        else if (window.location.pathname.includes('reading')) {
+            if (!testId || (typeof TEST_DATA !== 'undefined' && !TEST_DATA[testId])) {
+                testId = "activities_for_children"; // match default in dynamic setup
+            }
+            const title = (typeof TEST_DATA !== 'undefined' && TEST_DATA[testId]) ? TEST_DATA[testId].title : "Test";
+            section = `Reading: ${title}`;
+        }
 
         fetch('/api/score', {
             method: 'POST',
@@ -264,12 +279,21 @@ function updateHeader() {
     const headerDiv = document.querySelector('.brand');
     const headerElem = document.querySelector('.app-header');
 
-    // Don't modify auth pages or profile page header structure
-    if (window.location.pathname.includes('login') ||
-        window.location.pathname.includes('register') ||
-        window.location.pathname.includes('profile')) return;
+    // Avoid redirect loops on auth pages
+    if (window.location.pathname.includes('login.html') ||
+        window.location.pathname.includes('register.html') ||
+        window.location.pathname.includes('reset.html')) {
+        return;
+    }
 
     const token = localStorage.getItem('token');
+
+    // Auth Guard: Redirect to login if no token is found
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
     const userName = localStorage.getItem('userName');
     const userRole = localStorage.getItem('userRole');
 
@@ -436,6 +460,53 @@ if (loginForm) {
             errorDiv.textContent = 'Server bilan bog\'lanib bo\'lmadi.';
             btn.disabled = false;
             btn.textContent = "Kirish";
+        }
+    });
+}
+
+// 3.5 Reset Form Handler
+const resetForm = document.getElementById('reset-form');
+if (resetForm) {
+    resetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const phone = document.getElementById('reset-phone').value;
+        const newPassword = document.getElementById('reset-password').value;
+        const errorDiv = document.getElementById('reset-error');
+        const successDiv = document.getElementById('reset-success');
+        const btn = resetForm.querySelector('button');
+
+        btn.disabled = true;
+        btn.textContent = 'Kutilmoqda...';
+        errorDiv.textContent = '';
+        successDiv.textContent = '';
+
+        try {
+            const res = await fetch(`${API_URL}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, newPassword })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                successDiv.textContent = data.message;
+                // Bo'shatish
+                document.getElementById('reset-phone').value = '';
+                document.getElementById('reset-password').value = '';
+
+                // 2 soniyadan keyin login sahifaga qaytaramiz
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            } else {
+                errorDiv.textContent = data.error || 'Xatolik yuz berdi';
+                btn.disabled = false;
+                btn.textContent = "Parolni o'zgartirish";
+            }
+        } catch (err) {
+            errorDiv.textContent = 'Server bilan bog\'lanib bo\'lmadi.';
+            btn.disabled = false;
+            btn.textContent = "Parolni o'zgartirish";
         }
     });
 }

@@ -58,6 +58,29 @@ app.post('/api/login', (req, res) => {
     });
 });
 
+// Reset Password
+app.post('/api/reset-password', async (req, res) => {
+    const { phone, newPassword } = req.body;
+    if (!phone || !newPassword) {
+        return res.status(400).json({ error: 'Please provide phone and new password' });
+    }
+
+    db.get('SELECT * FROM users WHERE phone = ?', [phone], async (err, user) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!user) return res.status(404).json({ error: 'Bunday raqam bilan foydalanuvchi topilmadi' });
+
+        try {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            db.run('UPDATE users SET password = ? WHERE phone = ?', [hashedPassword, phone], function (err) {
+                if (err) return res.status(500).json({ error: 'Database update error' });
+                res.json({ message: 'Parol muvaffaqiyatli o\'zgartirildi' });
+            });
+        } catch (error) {
+            res.status(500).json({ error: 'Server error during password hashing' });
+        }
+    });
+});
+
 // Middleware to verify token
 const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];

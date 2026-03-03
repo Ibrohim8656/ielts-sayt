@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Practice - Parolni Tiklash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-body">
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+            </h1>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card">
+            <h2>Parolni Tiklash</h2>
+            <p>Ro'yxatdan o'tgan telefon raqamingizni va yangi parolni kiriting.</p>
+
+            <form id="reset-form">
+                <div class="input-group">
+                    <label for="reset-phone">Telefon raqam</label>
+                    <input type="tel" id="reset-phone" placeholder="Masalan: 998901234567" required>
+                </div>
+                <div class="input-group">
+                    <label for="reset-password">Yangi Parol</label>
+                    <input type="password" id="reset-password" placeholder="Yangi parolni kiriting" required>
+                </div>
+
+                <div id="reset-error" class="error-msg"></div>
+                <div id="reset-success"
+                    style="color: var(--success-color); margin-bottom: 15px; font-size: 0.9rem; text-align: center;">
+                </div>
+
+                <button type="submit" class="auth-btn">Parolni o'zgartirish</button>
+            </form>
+
+            <div class="auth-links">
+                <p><a href="login.html">Orqaga (Kirish)</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
