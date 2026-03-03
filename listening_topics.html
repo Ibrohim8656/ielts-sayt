@@ -59,43 +59,69 @@
             text-align: center;
             font-weight: bold;
         }
-
-        <link rel="stylesheet" href="style.css"><script>if( !localStorage.getItem('token')) {
-            window.location.href='login.html';
+    </style>
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = 'login.html';
         }
+    </script>
+</head>
 
-        </script></head><body class="home-body">< !-- Navbar --><header class="app-header"><div class="brand"><h1><a href="index.html">IELTS PRACTICE <span class="brand-sub">ZEMSTARK</span></a></h1></div><div style="display: flex; align-items: center;"><button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>< !-- Auth Nav will be injected here by script.js --></div></header><main class="home-container"><div class="topics-header"><h2>Listening Practice Tests</h2><p>O'zingiz xohlagan mavzuni tanlang va IELTS Listening mashqini boshlang</p>
- <div class="search-container"><input type="text" id="searchInput" class="search-input" placeholder="Mavzu nomini qidirish..."></div></div><div class="topics-grid" id="topics-container">< !-- Mavzular JavaScript orqali shu yerga qo'shiladi -->
- </div></main><script src="test_data.js"></script><script src="script.js"></script><script>document.addEventListener('DOMContentLoaded', async ()=> {
-                const container=document.getElementById('topics-container');
+<body class="home-body">
+    <!-- Navbar -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html">IELTS PRACTICE <span class="brand-sub">ZEMSTARK</span></a></h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <!-- Auth Nav will be injected here by script.js -->
+        </div>
+    </header>
+    <main class="home-container">
+        <div class="topics-header">
+            <h2>Listening Practice Tests</h2>
+            <p>O'zingiz xohlagan mavzuni tanlang va IELTS Listening mashqini boshlang</p>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Mavzu nomini qidirish...">
+            </div>
+        </div>
+        <div class="topics-grid" id="topics-container">
+            <!-- Mavzular JavaScript orqali shu yerga qo'shiladi -->
+        </div>
+    </main>
+    <script src="test_data.js"></script>
+    <script src="script.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('topics-container');
 
-                // 1. Fetch user scores
-                let completedScores= {}
+            // 1. Fetch user scores
+            let completedScores = {}
 
                 ;
-                const token=localStorage.getItem('token');
+            const token = localStorage.getItem('token');
 
-                if (token) {
-                    try {
-                        const res=await fetch('/api/profile', {
-                            headers: {
-                                'Authorization': `Bearer $ {
+            if (token) {
+                try {
+                    const res = await fetch('/api/profile', {
+                        headers: {
+                            'Authorization': `Bearer $ {
                                     token
                                 }
 
                                 `
-                            }
-                        });
+                        }
+                    });
 
                     if (res.ok) {
-                        const data=await res.json();
+                        const data = await res.json();
 
                         // store latest score per section
-                        data.scores.forEach(s=> {
-                                if ( !completedScores[s.section]) {
-                                    completedScores[s.section]=s;
-                                }
-                            });
+                        data.scores.forEach(s => {
+                            if (!completedScores[s.section]) {
+                                completedScores[s.section] = s;
+                            }
+                        });
                     }
                 }
 
@@ -104,122 +130,138 @@
                 }
             }
 
-            // 2. Render Topics
-            if (typeof LISTENING_TEST_DATA !=='undefined') {
-                for (const [id, data] of Object.entries(LISTENING_TEST_DATA)) {
-                    const sectionName=`Listening: $ {
-                        data.title
-                    }
+            // 2. Fetch and Render Topics
+            try {
+                const testsRes = await fetch('/api/listening-tests');
 
-                    `;
-                    const existingScore=completedScores[sectionName];
+                if (testsRes.ok) {
+                    const tests = await testsRes.json();
 
-                    const card=document.createElement('a');
-                    card.className="topic-card";
+                    if (tests.length > 0) {
+                        tests.forEach(test => {
+                            const sectionName = `Listening: $ {
+                                    test.title
+                                }
 
-                    if (existingScore) {
-                        const percent=Math.round((existingScore.correct / existingScore.total) * 100);
+                                `;
+                            const existingScore = completedScores[sectionName];
 
-                        card.href=`listening.html?id=$ {
-                            id
-                        }
+                            const card = document.createElement('a');
+                            card.className = "topic-card";
 
-                        &review=true`; // Changed href for review
+                            if (existingScore) {
+                                const percent = Math.round((existingScore.correct / existingScore.total) * 100);
 
-                        card.onclick=()=> window.location.href=`listening.html?id=$ {
-                            id
-                        }
+                                card.href = `listening.html?id=$ {
+                                        test.id
+                                    }
 
-                        &review=true`; // Changed onclick for review
-                        card.style.opacity="0.7";
-                        card.style.borderLeftColor="var(--success-color)";
+                                    &review=true`;
 
-                        card.innerHTML=` <div> <h3>$ {
-                            data.title
-                        }
+                                card.onclick = () => window.location.href = `listening.html?id=$ {
+                                        test.id
+                                    }
 
-                        <span style="font-size:0.9rem; color:var(--success-color);" >✓ Bajarilgan</span></h3> <div class="meta" >Manba: $ {
-                            data.source.toUpperCase()
-                        }
+                                    &review=true`;
+                                card.style.opacity = "0.7";
+                                card.style.borderLeftColor = "var(--success-color)";
 
-                        | 10 Questions</div> </div> <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);" > Natija: $ {
-                            existingScore.correct
-                        }
+                                card.innerHTML = ` <div> <h3>$ {
+                                        test.title
+                                    }
 
-                        /$ {
-                            existingScore.total
-                        }
+                                    <span style="font-size:0.9rem; color:var(--success-color);" >✓ Bajarilgan</span></h3> <div class="meta" >Manba: Mini-IELTS | $ {
+                                        test.id
+                                    }
 
-                        ($ {
-                                percent
+                                    -test</div> </div> <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);" > Natija: $ {
+                                        existingScore.correct
+                                    }
+
+                                    /$ {
+                                        existingScore.total
+                                    }
+
+                                    ($ {
+                                            percent
+                                        }
+
+                                        %) </div> `;
                             }
 
-                            %) </div> `;
+                            else {
+                                card.href = `listening.html?id=$ {
+                                        test.id
+                                    }
+
+                                    `;
+
+                                card.innerHTML = ` <div> <h3>$ {
+                                        test.title
+                                    }
+
+                                    </h3> <div class="meta" >Manba: Mini-IELTS | <a href="${test.source_url}" target="_blank" style="color:var(--primary-color);" >Asl Manba</a></div> </div> <div class="start-btn" >Mashqni boshlash ➔</div> `;
+                            }
+
+                            container.appendChild(card);
+                        });
                     }
 
                     else {
-                        card.href=`listening.html?id=$ {
-                            id
-                        }
-
-                        `;
-
-                        card.innerHTML=` <div> <h3>$ {
-                            data.title
-                        }
-
-                        </h3> <div class="meta" >Manba: $ {
-                            data.source.toUpperCase()
-                        }
-
-                        | 10 Questions</div> </div> <div class="start-btn" >Mashqni boshlash ➔</div> `;
+                        container.innerHTML = "<p>Ma'lumotlar topilmadi. Testlar bazaga qo'shilmoqda...</p>";
                     }
+                }
 
-                    container.appendChild(card);
+                else {
+                    container.innerHTML = "<p>Testlarni yuklashda xatolik yuz berdi.</p>";
                 }
             }
 
-            else {
-                container.innerHTML="<p>Ma'lumotlar topilmadi.</p>";
+            catch (error) {
+                console.error("Testlarni yuklashda xatolik:", error);
+                container.innerHTML = "<p>Server bilan ulanishda xatolik yuz berdi.</p>";
             }
 
             // 3. Search functionality
-            const searchInput=document.getElementById('searchInput');
+            const searchInput = document.getElementById('searchInput');
 
-            if(searchInput) {
-                searchInput.addEventListener('input', function() {
-                        const term=this.value.toLowerCase();
-                        const cards=container.querySelectorAll('.topic-card');
-                        let found=false;
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const term = this.value.toLowerCase();
+                    const cards = container.querySelectorAll('.topic-card');
+                    let found = false;
 
-                        cards.forEach(card=> {
-                                const title=card.querySelector('h3').textContent.toLowerCase();
+                    cards.forEach(card => {
+                        const title = card.querySelector('h3').textContent.toLowerCase();
 
-                                if (title.includes(term)) {
-                                    card.style.display='flex';
-                                    found=true;
-                                }
+                        if (title.includes(term)) {
+                            card.style.display = 'flex';
+                            found = true;
+                        }
 
-                                else {
-                                    card.style.display='none';
-                                }
-                            });
-
-                        const existingMsg=document.getElementById('not-found-msg');
-                        if (existingMsg) existingMsg.remove();
-
-                        if ( !found && cards.length > 0) {
-                            const msg=document.createElement('p');
-                            msg.id='not-found-msg';
-                            msg.textContent="Bunday mavzu topilmadi.";
-                            msg.style.textAlign="center";
-                            msg.style.width="100%";
-                            msg.style.color="var(--text-muted)";
-                            msg.style.marginTop="20px";
-                            msg.style.gridColumn="1 / -1";
-                            container.appendChild(msg);
+                        else {
+                            card.style.display = 'none';
                         }
                     });
+
+                    const existingMsg = document.getElementById('not-found-msg');
+                    if (existingMsg) existingMsg.remove();
+
+                    if (!found && cards.length > 0) {
+                        const msg = document.createElement('p');
+                        msg.id = 'not-found-msg';
+                        msg.textContent = "Bunday mavzu topilmadi.";
+                        msg.style.textAlign = "center";
+                        msg.style.width = "100%";
+                        msg.style.color = "var(--text-muted)";
+                        msg.style.marginTop = "20px";
+                        msg.style.gridColumn = "1 / -1";
+                        container.appendChild(msg);
+                    }
+                });
             }
         });
-        </script></body></html>
+    </script>
+</body>
+
+</html>

@@ -48,36 +48,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==========================================
 // DYNAMIC LISTENING TIZIMI
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Agar biz listening sahifasida bo'lsak va test_data.js ulangan bo'lsa
-    if (window.location.pathname.includes('listening.html') && typeof LISTENING_TEST_DATA !== 'undefined') {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Agar biz listening sahifasida bo'lsak
+    if (window.location.pathname.includes('listening.html') || window.location.pathname.includes('listening_test.html')) {
         const urlParams = new URLSearchParams(window.location.search);
         let testId = urlParams.get('id');
 
-        // Agar id berilmagan bo'lsa, default holatda theatre_trip_munich ni ochamiz
-        if (!testId || !LISTENING_TEST_DATA[testId]) {
-            testId = "theatre_trip_munich";
+        if (!testId) {
+            document.querySelector('.passage-content').innerHTML = "<p>Test ID berilmadi.</p>";
+            return;
         }
 
-        const testContent = LISTENING_TEST_DATA[testId];
+        try {
+            const res = await fetch(`/api/listening-tests/${testId}`);
+            if (res.ok) {
+                const testContent = await res.json();
 
-        const passageContainer = document.querySelector('.passage-content');
-        const rightPane = document.querySelector('.right-pane');
+                // Store test title globally for score
+                window.currentListeningTestTitle = testContent.title;
 
-        if (passageContainer && rightPane && testContent) {
-            // HTML ni joylashtirish
-            passageContainer.innerHTML = testContent.passage;
-            rightPane.innerHTML = testContent.questions;
+                const passageContainer = document.querySelector('.passage-content');
+                const rightPane = document.querySelector('.right-pane');
 
-            // Audio tag mavjudligini tekshiramiz va unga qanday mp3 load bo'lishini aytamiz
-            let audioNode = passageContainer.querySelector('audio source');
-            if (audioNode && testContent.audio_src) {
-                audioNode.src = testContent.audio_src;
-                audioNode.parentElement.load();
+                if (passageContainer && rightPane && testContent) {
+                    // HTML ni joylashtirish
+                    passageContainer.innerHTML = `
+                        <div class="audio-container" style="margin-bottom: 20px;">
+                            <iframe id="player" class="embed-responsive-item" style="width: 100%; height: 200px; border-radius: 8px;" src="${testContent.audio_src}" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    `;
+                    rightPane.innerHTML = testContent.questions;
+
+                    // Javoblarni o'zlashtirish
+                    Object.assign(ANSWERS_DATA, typeof testContent.answers === 'string' ? JSON.parse(testContent.answers) : testContent.answers);
+                }
+            } else {
+                document.querySelector('.passage-content').innerHTML = "<p>Test topilmadi.</p>";
             }
-
-            // Javoblarni o'zlashtirish
-            Object.assign(ANSWERS_DATA, testContent.answers);
+        } catch (e) {
+            console.error("Fetch DB xatosi:", e);
+            document.querySelector('.passage-content').innerHTML = "<p>Server ishlamayapti.</p>";
         }
     }
 });

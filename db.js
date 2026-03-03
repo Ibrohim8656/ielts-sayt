@@ -134,6 +134,16 @@ const initSchema = async () => {
             answers TEXT
         )`);
 
+        // Listening Tests Table
+        await query(`CREATE TABLE IF NOT EXISTS listening_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_url VARCHAR UNIQUE,
+            title VARCHAR,
+            audio_src TEXT,
+            questions TEXT,
+            answers TEXT
+        )`);
+
         // Seed Admin User
         const adminPhone = 'admin';
         const adminPass = '123parol123';
