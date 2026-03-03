@@ -57,7 +57,10 @@ const query = (sql, params = []) => {
             pgSql = pgSql.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY');
             // Adjust for JSONB type in Postgres
             pgSql = pgSql.replace(/answers TEXT/gi, 'answers JSONB');
-            pgSql = pgSql.replace(/VARCHAR/gi, 'VARCHAR(255)'); // Ensure VARCHAR has a length if not specified
+
+            // Ensure VARCHAR has a length if not specified, without breaking existing lengths like VARCHAR(20)
+            // Use word boundary to only replace VARCHAR when it's not immediately followed by (
+            pgSql = pgSql.replace(/\bVARCHAR\b(?!\()/gi, 'VARCHAR(255)');
 
             // Postgres pool.query fails if params is undefined, but [] is perfectly fine.
             pool.query(pgSql, params || [], (err, result) => {
