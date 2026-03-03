@@ -55,6 +55,9 @@ const query = (sql, params = []) => {
 
             // Adjust Data Types for Postgres explicitly in create table commands
             pgSql = pgSql.replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY');
+            // Adjust for JSONB type in Postgres
+            pgSql = pgSql.replace(/answers TEXT/gi, 'answers JSONB');
+            pgSql = pgSql.replace(/VARCHAR/gi, 'VARCHAR(255)'); // Ensure VARCHAR has a length if not specified
 
             // Postgres pool.query fails if params is undefined, but [] is perfectly fine.
             pool.query(pgSql, params || [], (err, result) => {
@@ -116,6 +119,16 @@ const initSchema = async () => {
             total INTEGER NOT NULL,
             date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
+        )`);
+
+        // Reading Tests Table
+        await query(`CREATE TABLE IF NOT EXISTS reading_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_url VARCHAR UNIQUE,
+            title VARCHAR,
+            passage TEXT,
+            questions TEXT,
+            answers TEXT
         )`);
 
         // Seed Admin User

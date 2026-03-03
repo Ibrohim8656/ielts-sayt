@@ -8,30 +8,39 @@ let ANSWERS_DATA = {
 // ==========================================
 // DYNAMIC READING TIZIMI
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Agar biz reading sahifasida bo'lsak va test_data.js ulangan bo'lsa
+document.addEventListener('DOMContentLoaded', async () => {
+    // Agar biz reading sahifasida bo'lsak
     if (window.location.pathname.includes('reading.html') || window.location.pathname.includes('reading_test.html')) {
         const urlParams = new URLSearchParams(window.location.search);
         let testId = urlParams.get('id');
 
-        // Agar id berilmagan bo'lsa, default holatda activities_for_children ni ochamiz
-        if (!testId || !TEST_DATA[testId]) {
-            testId = "activities_for_children";
+        if (!testId) {
+            document.querySelector('.passage-content').innerHTML = "<p>Test ID berilmadi.</p>";
+            return;
         }
 
-        const testContent = TEST_DATA[testId];
+        try {
+            const res = await fetch(`/api/reading-tests/${testId}`);
+            if (res.ok) {
+                const testContent = await res.json();
 
-        const passageContainer = document.querySelector('.passage-content');
-        const rightPane = document.querySelector('.right-pane');
+                // Store test title globally for score saving later
+                window.currentReadingTestTitle = testContent.title;
 
-        if (passageContainer && rightPane && testContent) {
-            // HTML ni joylashtirish
-            passageContainer.innerHTML = testContent.passage;
-            rightPane.innerHTML = testContent.questions;
+                const passageContainer = document.querySelector('.passage-content');
+                const rightPane = document.querySelector('.right-pane');
 
-            // Javoblarni ANSWERS_DATA ga o'zlashtirish
-            // Qolgan Listening javoblari bilan qo'shilib ketishi uchun Object.assign ishlatamiz
-            Object.assign(ANSWERS_DATA, testContent.answers);
+                if (passageContainer && rightPane && testContent) {
+                    passageContainer.innerHTML = testContent.passage;
+                    rightPane.innerHTML = testContent.questions;
+                    Object.assign(ANSWERS_DATA, typeof testContent.answers === 'string' ? JSON.parse(testContent.answers) : testContent.answers);
+                }
+            } else {
+                document.querySelector('.passage-content').innerHTML = "<p>Test topilmadi.</p>";
+            }
+        } catch (e) {
+            console.error("Fetch DB xatosi:", e);
+            document.querySelector('.passage-content').innerHTML = "<p>Server ishlamayapti.</p>";
         }
     }
 });
@@ -139,18 +148,30 @@ function finishTest(isReviewMode = false) {
         const inputElem = document.getElementById(qId) || document.querySelector(`input[name="${qId}"]`);
 
         if (!inputElem) {
-            // Agar sahnada topilmasa (masalan, testning o'zida yo'q savollar bo'lsa), umumiy sondan ayiramiz
             questionsOnPage--;
             return;
         }
 
-        const block = inputElem.closest('.question-block');
+        // We wrap feedbacks relative to the closest div or form if question-block doesn't exist
+        const block = inputElem.closest('.question-block') || inputElem.parentElement;
         if (!blockFeedbacks.has(block)) {
             blockFeedbacks.set(block, []);
         }
 
-        // Multiple choice (radio) tekshiruvi
-        if (inputElem.type === "radio") {
+        if (inputElem.tagName === "SELECT") {
+            inputElem.disabled = true;
+            if (inputElem.value.trim() !== "") userAnswer = inputElem.value;
+
+            if (userAnswer.toLowerCase().trim() === expectedAnswer) {
+                isCorrect = true;
+                inputElem.classList.add('checked-correct');
+                inputElem.style.borderColor = "var(--success-color)";
+            } else {
+                inputElem.classList.add('checked-wrong');
+                inputElem.style.borderColor = "var(--error-color)";
+            }
+        }
+        else if (inputElem.type === "radio") {
             const radios = document.querySelectorAll(`input[name="${qId}"]`);
             let answered = false;
 
@@ -175,16 +196,18 @@ function finishTest(isReviewMode = false) {
             });
 
         }
-        // Bo'shliqlarni to'ldirish (text)
-        else if (inputElem.type === "text") {
+        // Bo'shliqlarni to'ldirish (text, checkbox etc)
+        else {
             inputElem.disabled = true;
-            if (inputElem.value.trim() !== "") userAnswer = inputElem.value;
+            if (inputElem.value && inputElem.value.trim() !== "") userAnswer = inputElem.value;
 
             if (userAnswer.toLowerCase().trim() === expectedAnswer) {
                 isCorrect = true;
                 inputElem.classList.add('checked-correct');
+                inputElem.style.borderColor = "var(--success-color)";
             } else {
                 inputElem.classList.add('checked-wrong');
+                inputElem.style.borderColor = "var(--error-color)";
             }
         }
 
@@ -243,10 +266,7 @@ function finishTest(isReviewMode = false) {
             section = `Listening: ${title}`;
         }
         else if (window.location.pathname.includes('reading')) {
-            if (!testId || (typeof TEST_DATA !== 'undefined' && !TEST_DATA[testId])) {
-                testId = "activities_for_children"; // match default in dynamic setup
-            }
-            const title = (typeof TEST_DATA !== 'undefined' && TEST_DATA[testId]) ? TEST_DATA[testId].title : "Test";
+            const title = window.currentReadingTestTitle || "Test";
             section = `Reading: ${title}`;
         }
 

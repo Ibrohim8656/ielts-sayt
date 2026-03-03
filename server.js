@@ -166,6 +166,29 @@ app.get('/api/admin/users', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
+// Reading Tests API
+app.get('/api/reading-tests', async (req, res) => {
+    try {
+        const result = await db.query('SELECT id, title, source_url FROM reading_tests ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error fetching reading tests' });
+    }
+});
+
+app.get('/api/reading-tests/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const result = await db.query('SELECT * FROM reading_tests WHERE id = ?', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Test not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error fetching test data' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     if (db.isPg) {

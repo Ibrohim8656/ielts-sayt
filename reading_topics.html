@@ -80,6 +80,9 @@
         <div class="topics-header">
             <h2>Reading Practice Tests</h2>
             <p>O'zingiz xohlagan mavzuni tanlang va IELTS Reading mashqini boshlang</p>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Mavzu nomini qidirish...">
+            </div>
         </div>
 
         <div class="topics-grid" id="topics-container">
@@ -116,45 +119,92 @@
                 }
             }
 
-            // 2. Render Topics
-            if (typeof TEST_DATA !== 'undefined') {
-                for (const [id, data] of Object.entries(TEST_DATA)) {
-                    const sectionName = `Reading: ${data.title}`;
-                    const existingScore = completedScores[sectionName];
+            // 2. Fetch Reading Topics from Backend API
+            try {
+                const testsRes = await fetch('/api/reading-tests');
+                if (testsRes.ok) {
+                    const tests = await testsRes.json();
 
-                    const card = document.createElement('a');
-                    card.className = "topic-card";
-
-                    if (existingScore) {
-                        const percent = Math.round((existingScore.correct / existingScore.total) * 100);
-                        card.href = `reading.html?id=${id}&review=true`;
-                        card.style.opacity = "0.7";
-                        card.style.borderLeftColor = "var(--success-color)";
-
-                        card.innerHTML = `
-                            <div>
-                                <h3>${data.title} <span style="font-size:0.9rem; color:var(--success-color);">✓ Bajarilgan</span></h3>
-                                <div class="meta">Manba: ${data.source.toUpperCase()} | 13+ Questions</div>
-                            </div>
-                            <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
-                                Natija tahlili: ${existingScore.correct}/${existingScore.total} (${percent}%)
-                            </div>
-                        `;
-                    } else {
-                        card.href = `reading.html?id=${id}`;
-                        card.innerHTML = `
-                            <div>
-                                <h3>${data.title}</h3>
-                                <div class="meta">Manba: ${data.source.toUpperCase()} | 13+ Questions</div>
-                            </div>
-                            <div class="start-btn">Mashqni boshlash ➔</div>
-                        `;
+                    if (tests.length === 0) {
+                        container.innerHTML = "<p>Ma'lumotlar topilmadi.</p>";
+                        return;
                     }
-                    container.appendChild(card);
+
+                    tests.forEach(data => {
+                        const id = data.id;
+                        const sectionName = `Reading: ${data.title}`;
+                        const existingScore = completedScores[sectionName];
+
+                        const card = document.createElement('a');
+                        card.className = "topic-card";
+
+                        if (existingScore) {
+                            const percent = Math.round((existingScore.correct / existingScore.total) * 100);
+                            card.href = `reading.html?id=${id}&review=true`;
+                            card.style.opacity = "0.7";
+                            card.style.borderLeftColor = "var(--success-color)";
+
+                            card.innerHTML = `
+                                <div>
+                                    <h3>${data.title} <span style="font-size:0.9rem; color:var(--success-color);">✓ Bajarilgan</span></h3>
+                                    <div class="meta">Mini-IELTS | ${data.source_url ? `<a href="${data.source_url}" target="_blank" style="color:var(--text-muted); text-decoration:underline;">Asl Manba</a>` : ''}</div>
+                                </div>
+                                <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                    Natija tahlili: ${existingScore.correct}/${existingScore.total} (${percent}%)
+                                </div>
+                            `;
+                        } else {
+                            card.href = `reading.html?id=${id}`;
+                            card.innerHTML = `
+                                <div>
+                                    <h3>${data.title}</h3>
+                                    <div class="meta">Mini-IELTS | ${data.source_url ? `<a href="${data.source_url}" target="_blank" style="color:var(--text-muted); text-decoration:underline;">Asl Manba</a>` : ''}</div>
+                                </div>
+                                <div class="start-btn">Mashqni boshlash ➔</div>
+                            `;
+                        }
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = "<p>API bilan ulanishda xatolik yuz berdi.</p>";
                 }
-            } else {
-                container.innerHTML = "<p>Ma'lumotlar topilmadi.</p>";
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = "<p>Server ishlamayapti.</p>";
             }
+
+            // 3. Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function () {
+                const term = this.value.toLowerCase();
+                const cards = container.querySelectorAll('.topic-card');
+                let found = false;
+
+                cards.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    if (title.includes(term)) {
+                        card.style.display = 'flex';
+                        found = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                const existingMsg = document.getElementById('not-found-msg');
+                if (existingMsg) existingMsg.remove();
+
+                if (!found && cards.length > 0) {
+                    const msg = document.createElement('p');
+                    msg.id = 'not-found-msg';
+                    msg.textContent = "Bunday mavzu topilmadi.";
+                    msg.style.textAlign = "center";
+                    msg.style.width = "100%";
+                    msg.style.color = "var(--text-muted)";
+                    msg.style.marginTop = "20px";
+                    msg.style.gridColumn = "1 / -1";
+                    container.appendChild(msg);
+                }
+            });
         });
     </script>
 </body>
