@@ -59,105 +59,129 @@
             text-align: center;
             font-weight: bold;
         }
-    </style>
-</head>
 
-<body class="home-body">
+        <link rel="stylesheet" href="style.css"><script>if( !localStorage.getItem('token')) {
+            window.location.href='login.html';
+        }
 
-    <!-- Navbar -->
-    <header class="app-header">
-        <div class="brand">
-            <h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
-            </h1>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
-            <!-- Auth Nav will be injected here by script.js -->
-        </div>
-    </header>
+        </script></head><body class="home-body">< !-- Navbar --><header class="app-header"><div class="brand"><h1><a href="index.html" style="color:var(--primary-color); text-decoration:none;">IELTS Mashg'ulotlari</a>
+ </h1></div><div style="display: flex; align-items: center;"><button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>< !-- Auth Nav will be injected here by script.js --></div></header><main class="home-container"><div class="topics-header"><h2>Listening Practice Tests</h2><p>O'zingiz xohlagan mavzuni tanlang va IELTS Listening mashqini boshlang</p>
+ </div><div class="topics-grid" id="topics-container">< !-- Mavzular JavaScript orqali shu yerga qo'shiladi -->
+ </div></main><script src="test_data.js"></script><script src="script.js"></script><script>document.addEventListener('DOMContentLoaded', async ()=> {
+                const container=document.getElementById('topics-container');
 
-    <main class="home-container">
-        <div class="topics-header">
-            <h2>Listening Practice Tests</h2>
-            <p>O'zingiz xohlagan mavzuni tanlang va IELTS Listening mashqini boshlang</p>
-        </div>
+                // 1. Fetch user scores
+                let completedScores= {}
 
-        <div class="topics-grid" id="topics-container">
-            <!-- Mavzular JavaScript orqali shu yerga qo'shiladi -->
-        </div>
-    </main>
+                ;
+                const token=localStorage.getItem('token');
 
-    <script src="test_data.js"></script>
-    <script src="script.js"></script>
+                if (token) {
+                    try {
+                        const res=await fetch('/api/profile', {
+                            headers: {
+                                'Authorization': `Bearer $ {
+                                    token
+                                }
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const container = document.getElementById('topics-container');
-
-            // 1. Fetch user scores
-            let completedScores = {};
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const res = await fetch('/api/profile', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        // store latest score per section
-                        data.scores.forEach(s => {
-                            if (!completedScores[s.section]) {
-                                completedScores[s.section] = s;
+                                `
                             }
                         });
+
+                    if (res.ok) {
+                        const data=await res.json();
+
+                        // store latest score per section
+                        data.scores.forEach(s=> {
+                                if ( !completedScores[s.section]) {
+                                    completedScores[s.section]=s;
+                                }
+                            });
                     }
-                } catch (e) {
+                }
+
+                catch (e) {
                     console.error("Could not fetch user scores", e);
                 }
             }
 
             // 2. Render Topics
-            if (typeof LISTENING_TEST_DATA !== 'undefined') {
+            if (typeof LISTENING_TEST_DATA !=='undefined') {
                 for (const [id, data] of Object.entries(LISTENING_TEST_DATA)) {
-                    const sectionName = `Listening: ${data.title}`;
-                    const existingScore = completedScores[sectionName];
+                    const sectionName=`Listening: $ {
+                        data.title
+                    }
 
-                    const card = document.createElement('a');
-                    card.className = "topic-card";
+                    `;
+                    const existingScore=completedScores[sectionName];
+
+                    const card=document.createElement('a');
+                    card.className="topic-card";
 
                     if (existingScore) {
-                        const percent = Math.round((existingScore.correct / existingScore.total) * 100);
-                        card.href = "javascript:void(0)";
-                        card.onclick = () => alert(`Siz bu testni ishlagansiz!\n\nNatija: ${existingScore.correct}/${existingScore.total} (${percent}%)`);
-                        card.style.opacity = "0.7";
-                        card.style.borderLeftColor = "var(--success-color)";
+                        const percent=Math.round((existingScore.correct / existingScore.total) * 100);
 
-                        card.innerHTML = `
-                            <div>
-                                <h3>${data.title} <span style="font-size:0.9rem; color:var(--success-color);">✓ Bajarilgan</span></h3>
-                                <div class="meta">Manba: ${data.source.toUpperCase()} | 10 Questions</div>
-                            </div>
-                            <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
-                                Natija: ${existingScore.correct}/${existingScore.total} (${percent}%)
-                            </div>
-                        `;
-                    } else {
-                        card.href = `listening.html?id=${id}`;
-                        card.innerHTML = `
-                            <div>
-                                <h3>${data.title}</h3>
-                                <div class="meta">Manba: ${data.source.toUpperCase()} | 10 Questions</div>
-                            </div>
-                            <div class="start-btn">Mashqni boshlash ➔</div>
-                        `;
+                        card.href=`listening.html?id=$ {
+                            id
+                        }
+
+                        &review=true`; // Changed href for review
+
+                        card.onclick=()=> window.location.href=`listening.html?id=$ {
+                            id
+                        }
+
+                        &review=true`; // Changed onclick for review
+                        card.style.opacity="0.7";
+                        card.style.borderLeftColor="var(--success-color)";
+
+                        card.innerHTML=` <div> <h3>$ {
+                            data.title
+                        }
+
+                        <span style="font-size:0.9rem; color:var(--success-color);" >✓ Bajarilgan</span></h3> <div class="meta" >Manba: $ {
+                            data.source.toUpperCase()
+                        }
+
+                        | 10 Questions</div> </div> <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);" > Natija: $ {
+                            existingScore.correct
+                        }
+
+                        /$ {
+                            existingScore.total
+                        }
+
+                        ($ {
+                                percent
+                            }
+
+                            %) </div> `;
                     }
+
+                    else {
+                        card.href=`listening.html?id=$ {
+                            id
+                        }
+
+                        `;
+
+                        card.innerHTML=` <div> <h3>$ {
+                            data.title
+                        }
+
+                        </h3> <div class="meta" >Manba: $ {
+                            data.source.toUpperCase()
+                        }
+
+                        | 10 Questions</div> </div> <div class="start-btn" >Mashqni boshlash ➔</div> `;
+                    }
+
                     container.appendChild(card);
                 }
-            } else {
-                container.innerHTML = "<p>Ma'lumotlar topilmadi.</p>";
+            }
+
+            else {
+                container.innerHTML="<p>Ma'lumotlar topilmadi.</p>";
             }
         });
-    </script>
-</body>
-
-</html>
+        </script></body></html>

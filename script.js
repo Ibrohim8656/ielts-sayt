@@ -109,7 +109,7 @@ function updateTimer() {
 // ==========================================
 let testFinished = false;
 
-function finishTest() {
+function finishTest(isReviewMode = false) {
     if (testFinished) return;
     testFinished = true;
 
@@ -117,37 +117,41 @@ function finishTest() {
 
     const submitBtn = document.getElementById("submit-btn");
     submitBtn.disabled = true;
-    submitBtn.textContent = "Finished & Checked";
+    submitBtn.textContent = isReviewMode ? "Test Yechimlari Tahlili" : "Finished & Checked";
 
     let correctCount = 0;
 
-    // Sahifadagi mavjud input/radio larni yig'ib chiqish uchun:
-    const allQuestionBlocks = document.querySelectorAll('.question-block');
-    let questionsOnPage = 0;
+    // LUKUP OVER ALL ANSWERS TO CALCULATE SCORES AND RENDER FEEDBACK
+    const allQuestions = Object.keys(ANSWERS_DATA);
+    let questionsOnPage = allQuestions.length;
 
-    allQuestionBlocks.forEach(block => {
-        // q1, q2 kabi ID larni aniqlaymiz
-        const firstInput = block.querySelector('input');
-        if (!firstInput) return; // Agar faqat matn bo'lsa o'tkazib yuboramiz
+    // First, map each question-block to hold the feedback at the bottom of it.
+    // We Group feedbacks by their closest question-block so we don't spam the UI in weird places.
+    const blockFeedbacks = new Map();
 
-        const qId = firstInput.name || firstInput.id;
-        if (!ANSWERS_DATA[qId]) return; // Bazasida yo'q savol
-
-        questionsOnPage++;
-
+    allQuestions.forEach(qId => {
         const expectedAnswer = ANSWERS_DATA[qId].answer.toLowerCase().trim();
         const explanation = ANSWERS_DATA[qId].explanation;
-
-        // Feedback Box yaratamiz (Har bir savol tagida chiqadi)
-        let feedbackBox = document.createElement("div");
-        feedbackBox.className = "feedback-box";
-
-        let userAnswer = "";
         let isCorrect = false;
+        let userAnswer = "[Bo'sh / Kiritilmagan]";
 
-        // Multiple choice tekshiruvi
-        if (firstInput.type === "radio") {
-            const radios = block.querySelectorAll('input[type="radio"]');
+        // Find the input element(s) for this question
+        const inputElem = document.getElementById(qId) || document.querySelector(`input[name="${qId}"]`);
+
+        if (!inputElem) {
+            // Agar sahnada topilmasa (masalan, testning o'zida yo'q savollar bo'lsa), umumiy sondan ayiramiz
+            questionsOnPage--;
+            return;
+        }
+
+        const block = inputElem.closest('.question-block');
+        if (!blockFeedbacks.has(block)) {
+            blockFeedbacks.set(block, []);
+        }
+
+        // Multiple choice (radio) tekshiruvi
+        if (inputElem.type === "radio") {
+            const radios = document.querySelectorAll(`input[name="${qId}"]`);
             let answered = false;
 
             radios.forEach(r => {
@@ -162,65 +166,70 @@ function finishTest() {
                         r.closest('.option').classList.add('checked-wrong');
                     }
                 }
+
+                // Show the correct answer visually if they were wrong
+                if (!isCorrect && r.value.toLowerCase().trim() === expectedAnswer) {
+                    r.closest('.option').style.border = "2px dashed var(--success-color)";
+                    r.closest('.option').style.background = "#fff";
+                }
             });
 
-            if (!answered) { userAnswer = "[No Answer provided]"; }
-
         }
-        // Bo'shliqlarni to'ldirish
-        else if (firstInput.type === "text") {
-            firstInput.disabled = true;
-            userAnswer = firstInput.value;
+        // Bo'shliqlarni to'ldirish (text)
+        else if (inputElem.type === "text") {
+            inputElem.disabled = true;
+            if (inputElem.value.trim() !== "") userAnswer = inputElem.value;
 
             if (userAnswer.toLowerCase().trim() === expectedAnswer) {
                 isCorrect = true;
-                firstInput.classList.add('checked-correct');
+                inputElem.classList.add('checked-correct');
             } else {
-                firstInput.classList.add('checked-wrong');
+                inputElem.classList.add('checked-wrong');
             }
-
-            if (userAnswer === "") { userAnswer = "[Empty]"; }
         }
 
         if (isCorrect) correctCount++;
 
         // Feedback html yozuvini shakllantirish
+        let feedbackHTML = "";
         if (isCorrect) {
-            feedbackBox.classList.add("correct");
-            feedbackBox.innerHTML = `
-                <div class="feedback-title">✓ Correct</div>
-                <div>Your answer: <strong>${userAnswer}</strong></div>
-                <div class="feedback-solution">Solution: ${explanation}</div>
+            feedbackHTML = `
+                <div class="feedback-box correct" style="margin-top: 10px;">
+                    <div class="feedback-title">✓ Correct (${qId})</div>
+                    <div>Your answer: <strong>${userAnswer}</strong></div>
+                    <div class="feedback-solution">Solution: ${explanation}</div>
+                </div>
             `;
         } else {
-            feedbackBox.classList.add("wrong");
-            feedbackBox.innerHTML = `
-                <div class="feedback-title">✗ Incorrect</div>
-                <div>Your answer: <strong>${userAnswer}</strong></div>
-                <div>Correct answer: <strong>${ANSWERS_DATA[qId].answer}</strong></div>
-                <div class="feedback-solution">Solution: ${explanation}</div>
+            feedbackHTML = `
+                <div class="feedback-box wrong" style="margin-top: 10px;">
+                    <div class="feedback-title">✗ Incorrect (${qId})</div>
+                    <div>Your answer: <strong>${userAnswer}</strong></div>
+                    <div>Correct answer: <strong>${ANSWERS_DATA[qId].answer}</strong></div>
+                    <div class="feedback-solution">Solution: ${explanation}</div>
+                </div>
             `;
         }
-
-        block.appendChild(feedbackBox);
-
-        // Agar Multiple Choice da adashgan bo'lsa to'g'ri variantni yashil qilib qo'yish
-        if (!isCorrect && firstInput.type === "radio") {
-            const radios = block.querySelectorAll('input[type="radio"]');
-            radios.forEach(r => {
-                if (r.value.toLowerCase().trim() === expectedAnswer) {
-                    r.closest('.option').style.border = "2px dashed var(--success-color)";
-                    r.closest('.option').style.background = "#fff";
-                }
-            });
-        }
+        blockFeedbacks.get(block).push(feedbackHTML);
     });
 
-    showResultModal(correctCount, questionsOnPage);
+    // Append all grouped feedbacks to their respective blocks
+    blockFeedbacks.forEach((feedbacks, block) => {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = feedbacks.join('');
+        block.appendChild(wrapper);
+    });
 
-    // Save score to backend if user is logged in
+    if (!isReviewMode) {
+        showResultModal(correctCount, questionsOnPage);
+    } else {
+        // Tahlil rejimida modalni ko'rsatmasdan shunchaki tahlilni ochiq qoldiramiz
+        document.getElementById("timer-display").style.display = "none";
+    }
+
+    // Save score to backend if user is logged in AND it is not review mode
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && !isReviewMode) {
         // Find which section this is by looking at the page title or filename
         let section = "Practice Test";
         const urlParams = new URLSearchParams(window.location.search);
@@ -255,6 +264,17 @@ function finishTest() {
         }).catch(err => console.error("Error saving score:", err));
     }
 }
+
+// Check for review mode on load
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('review') === 'true') {
+        // Biraz vaqt berib, HTML to'liq chizilgach finishTest() ni ishga tushiring
+        setTimeout(() => {
+            finishTest(true);
+        }, 300);
+    }
+});
 
 // Modal oyna funksiyalari
 function showResultModal(correct, total) {

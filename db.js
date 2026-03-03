@@ -1,53 +1,136 @@
 const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
-const dbPath = path.resolve(__dirname, 'database.sqlite');
+const dbUrl = process.env.DATABASE_URL;
+let pool;
+let sqliteDb;
+const isPg = !!dbUrl;
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database', err.message);
-    } else {
-        console.log('Connected to the SQLite database.');
+if (isPg) {
+    // Render.com PostgreSQL connection
+    pool = new Pool({
+        connectionString: dbUrl,
+        ssl: { rejectUnauthorized: false } // Required for Render DB
+    });
 
-        // Create Users table
-        db.run(`CREATE TABLE IF NOT EXISTS users (
+    pool.on('connect', () => {
+        console.log('Connected to PostgreSQL database.');
+    });
+
+    pool.on('error', (err) => {
+        console.error('Unexpected error on idle PostgreSQL client', err);
+        process.exit(-1);
+    });
+
+} else {
+    // Local SQLite connection
+    const dbPath = path.resolve(__dirname, 'database.sqlite');
+    sqliteDb = new sqlite3.Database(dbPath, (err) => {
+        if (err) {
+            console.error('Error opening SQLite database', err.message);
+        } else {
+            console.log('Connected to local SQLite database.');
+        }
+    });
+}
+
+// Internal query wrapper mechanism to support BOTH pg and sqlite seamlessly.
+// SQLite uses ?, pg uses $1, $2, etc.
+const query = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+        if (isPg) {
+            // Translate "?" in sql to "$1", "$2", etc for PG
+            let pgSql = sql;
+            let counter = 1;
+            while (pgSql.includes('?')) {
+                pgSql = pgSql.replace('?', `$${counter++}`);
+            }
+
+            // Adjust Data Types for Postgres explicitly in create table commands
+            pgSql = pgSql.replace(/AUTOINCREMENT/gi, 'SERIAL');
+            pgSql = pgSql.replace(/INTEGER PRIMARY KEY/gi, 'SERIAL PRIMARY KEY');
+
+            pool.query(pgSql, params, (err, result) => {
+                if (err) reject(err);
+                // Unified standard response: { rows: [...], lastID: result.insertId }
+                else resolve({
+                    rows: result.rows,
+                    // Postgres has rows[0].id if RETURNING id was used, otherwise best effort.
+                    lastID: result.rows.length ? result.rows[0].id : null
+                });
+            });
+        } else {
+            // SQLite Execution
+            const isSelect = sql.trim().toUpperCase().startsWith('SELECT');
+
+            if (isSelect) {
+                sqliteDb.all(sql, params, (err, rows) => {
+                    if (err) reject(err);
+                    else resolve({ rows });
+                });
+            } else {
+                sqliteDb.run(sql, params, function (err) {
+                    if (err) reject(err);
+                    else resolve({ rows: [], lastID: this.lastID });
+                });
+            }
+        }
+    });
+};
+
+// Initialize schema on startup
+const initSchema = async () => {
+    try {
+        // Users Table
+        await query(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            phone TEXT UNIQUE NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            phone VARCHAR(20) UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            role TEXT DEFAULT 'user'
-        )`, () => {
-            // Check if column exists, if not, add it (for existing db)
-            db.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`, (err) => {
+            role VARCHAR(50) DEFAULT 'user'
+        )`);
+
+        if (!isPg) {
+            // Check if column role exists in SQLite, if not, add it safely
+            sqliteDb.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`, (err) => {
                 // Ignore error if column already exists
             });
+        }
 
-            // Seed Admin User
-            const adminPhone = 'admin';
-            const adminPass = '123parol123';
-            const bcrypt = require('bcryptjs');
-
-            db.get('SELECT * FROM users WHERE phone = ?', [adminPhone], async (err, row) => {
-                if (!row) {
-                    const hashed = await bcrypt.hash(adminPass, 10);
-                    db.run('INSERT INTO users (name, phone, password, role) VALUES (?, ?, ?, ?)',
-                        ['Administrator', adminPhone, hashed, 'admin']);
-                    console.log('Admin user seeded.');
-                }
-            });
-        });
-
-        // Create Scores table
-        db.run(`CREATE TABLE IF NOT EXISTS scores (
+        // Scores Table
+        await query(`CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
-            section TEXT NOT NULL,
+            section VARCHAR(255) NOT NULL,
             correct INTEGER NOT NULL,
             total INTEGER NOT NULL,
             date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )`);
-    }
-});
 
-module.exports = db;
+        // Seed Admin User
+        const adminPhone = 'admin';
+        const adminPass = '123parol123';
+        const res = await query('SELECT * FROM users WHERE phone = ?', [adminPhone]);
+
+        if (res.rows.length === 0) {
+            const hashed = await bcrypt.hash(adminPass, 10);
+            await query('INSERT INTO users (name, phone, password, role) VALUES (?, ?, ?, ?)',
+                ['Administrator', adminPhone, hashed, 'admin']);
+            console.log('Admin user seeded successfully.');
+        }
+
+    } catch (err) {
+        console.error('Error initializing schema:', err);
+    }
+};
+
+// Start initialization
+initSchema();
+
+module.exports = {
+    query,
+    isPg
+};

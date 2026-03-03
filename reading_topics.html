@@ -60,6 +60,7 @@
             font-weight: bold;
         }
     </style>
+    <script>if (!localStorage.getItem('token')) { window.location.href = 'login.html'; }</script>
 </head>
 
 <body class="home-body">
@@ -127,8 +128,7 @@
 
                     if (existingScore) {
                         const percent = Math.round((existingScore.correct / existingScore.total) * 100);
-                        card.href = "javascript:void(0)";
-                        card.onclick = () => alert(`Siz bu testni ishlagansiz!\n\nNatija: ${existingScore.correct}/${existingScore.total} (${percent}%)`);
+                        card.href = `reading.html?id=${id}&review=true`;
                         card.style.opacity = "0.7";
                         card.style.borderLeftColor = "var(--success-color)";
 
@@ -138,7 +138,7 @@
                                 <div class="meta">Manba: ${data.source.toUpperCase()} | 13+ Questions</div>
                             </div>
                             <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
-                                Natija: ${existingScore.correct}/${existingScore.total} (${percent}%)
+                                Natija tahlili: ${existingScore.correct}/${existingScore.total} (${percent}%)
                             </div>
                         `;
                     } else {
