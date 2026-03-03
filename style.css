@@ -55,7 +55,24 @@ body:not(.home-body) {
 .brand h1 {
     font-size: 1.25rem;
     font-weight: 700;
+}
+
+.brand h1 a {
+    text-decoration: none;
     color: var(--primary-color);
+    display: flex;
+    align-items: center;
+}
+
+.brand-sub {
+    font-size: 0.55em;
+    font-weight: 800;
+    margin-left: 8px;
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 1px;
 }
 
 .back-link {
