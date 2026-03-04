@@ -73,8 +73,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (passageContainer && rightPane && testContent) {
                     // HTML ni joylashtirish
                     passageContainer.innerHTML = `
-                        <div class="audio-container" style="margin-bottom: 20px;">
-                            <iframe id="player" class="embed-responsive-item" style="width: 100%; height: 200px; border-radius: 8px;" src="${testContent.audio_src}" frameborder="0" allowfullscreen></iframe>
+                        <div class="audio-container" style="margin-bottom: 20px; text-align: center; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">
+                                Agar ovoz eshitilmasa, <b>audio/${testContent.id}.mp3</b> fayli serverda yo'qligini bildiradi.
+                            </p>
+                            <audio controls style="width: 100%;" id="listening-audio">
+                                <source src="/audio/${testContent.id}.mp3" type="audio/mpeg">
+                                Sizning brauzeringiz audio elementini qo'llab-quvvatlamaydi.
+                            </audio>
                         </div>
                     `;
                     rightPane.innerHTML = testContent.questions;
