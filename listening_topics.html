@@ -139,11 +139,7 @@
 
                     if (tests.length > 0) {
                         tests.forEach(test => {
-                            const sectionName = `Listening: $ {
-                                    test.title
-                                }
-
-                                `;
+                            const sectionName = `Listening: ${test.title}`;
                             const existingScore = completedScores[sectionName];
 
                             const card = document.createElement('a');
@@ -152,55 +148,30 @@
                             if (existingScore) {
                                 const percent = Math.round((existingScore.correct / existingScore.total) * 100);
 
-                                card.href = `listening.html?id=$ {
-                                        test.id
-                                    }
-
-                                    &review=true`;
-
-                                card.onclick = () => window.location.href = `listening.html?id=$ {
-                                        test.id
-                                    }
-
-                                    &review=true`;
+                                card.href = `listening.html?id=${test.id}&review=true`;
+                                card.onclick = () => window.location.href = `listening.html?id=${test.id}&review=true`;
                                 card.style.opacity = "0.7";
                                 card.style.borderLeftColor = "var(--success-color)";
 
-                                card.innerHTML = ` <div> <h3>$ {
-                                        test.title
-                                    }
+                                card.innerHTML = `
+                                    <div>
+                                        <h3>${test.title} <span style="font-size:0.9rem; color:var(--success-color);">✓ Bajarilgan</span></h3>
+                                        <div class="meta">Manba: Mini-IELTS | ${test.id}-test</div>
+                                    </div>
+                                    <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                        Natija tahlili: ${existingScore.correct}/${existingScore.total} (${percent}%)
+                                    </div>
+                                `;
+                            } else {
+                                card.href = `listening.html?id=${test.id}`;
 
-                                    <span style="font-size:0.9rem; color:var(--success-color);" >✓ Bajarilgan</span></h3> <div class="meta" >Manba: Mini-IELTS | $ {
-                                        test.id
-                                    }
-
-                                    -test</div> </div> <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);" > Natija: $ {
-                                        existingScore.correct
-                                    }
-
-                                    /$ {
-                                        existingScore.total
-                                    }
-
-                                    ($ {
-                                            percent
-                                        }
-
-                                        %) </div> `;
-                            }
-
-                            else {
-                                card.href = `listening.html?id=$ {
-                                        test.id
-                                    }
-
-                                    `;
-
-                                card.innerHTML = ` <div> <h3>$ {
-                                        test.title
-                                    }
-
-                                    </h3> <div class="meta" >Manba: Mini-IELTS | <a href="${test.source_url}" target="_blank" style="color:var(--primary-color);" >Asl Manba</a></div> </div> <div class="start-btn" >Mashqni boshlash ➔</div> `;
+                                card.innerHTML = `
+                                    <div>
+                                        <h3>${test.title}</h3>
+                                        <div class="meta">Manba: Mini-IELTS | <a href="${test.source_url}" target="_blank" style="color:var(--primary-color);">Asl Manba</a></div>
+                                    </div>
+                                    <div class="start-btn">Mashqni boshlash ➔</div>
+                                `;
                             }
 
                             container.appendChild(card);

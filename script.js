@@ -275,10 +275,7 @@ function finishTest(isReviewMode = false) {
         let testId = urlParams.get('id');
 
         if (window.location.pathname.includes('listening')) {
-            if (!testId || (typeof LISTENING_TEST_DATA !== 'undefined' && !LISTENING_TEST_DATA[testId])) {
-                testId = "theatre_trip_munich"; // match default in dynamic setup
-            }
-            const title = (typeof LISTENING_TEST_DATA !== 'undefined' && LISTENING_TEST_DATA[testId]) ? LISTENING_TEST_DATA[testId].title : "Test";
+            const title = window.currentListeningTestTitle || "Test";
             section = `Listening: ${title}`;
         }
         else if (window.location.pathname.includes('reading')) {
