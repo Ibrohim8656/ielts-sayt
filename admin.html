@@ -110,6 +110,25 @@
             background: var(--surface-color);
             border-radius: 12px;
         }
+
+        .user-scores-list {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .user-scores-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .user-scores-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .user-scores-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
     </style>
     <script>if (!localStorage.getItem('token')) { window.location.href = 'login.html'; }</script>
 </head>
