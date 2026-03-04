@@ -75,10 +75,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     passageContainer.innerHTML = `
                         <div class="audio-container" style="margin-bottom: 20px; text-align: center; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
                             <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">
-                                Agar ovoz eshitilmasa, <b>audio/${testContent.id}.mp3</b> fayli serverda yo'qligini bildiradi.
+                                Agar ovoz eshitilmasa, <b>audio/${testContent.title}.mp3</b> fayli serverda yo'qligini bildiradi! Iltimos faylni huddi shu nom bilan <b>audio</b> papkasiga joylang.
                             </p>
                             <audio controls style="width: 100%;" id="listening-audio">
-                                <source src="/audio/${testContent.id}.mp3" type="audio/mpeg">
+                                <source src="/audio/${encodeURIComponent(testContent.title)}.mp3" type="audio/mpeg">
                                 Sizning brauzeringiz audio elementini qo'llab-quvvatlamaydi.
                             </audio>
                         </div>

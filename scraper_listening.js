@@ -14,8 +14,14 @@ async function getTestLinksFromPage(pageNumber) {
             const href = $(el).attr('href');
             if (href && href.match(/^\/\d+\/listening\/.+$/)) {
                 const fullUrl = 'https://mini-ielts.com' + href;
-                if (!testLinks.includes(fullUrl)) {
-                    testLinks.push(fullUrl);
+                const linkText = $(el).text().trim();
+
+                // Only take links that actually contain the human readable title, ignore the "Take Test" or image blanks
+                if (linkText && linkText !== "Take Test" && linkText !== "View Solution") {
+                    // Check if we already have it to avoid duplicates
+                    if (!testLinks.find(t => t.url === fullUrl)) {
+                        testLinks.push({ url: fullUrl, title: linkText });
+                    }
                 }
             }
         });
@@ -26,11 +32,12 @@ async function getTestLinksFromPage(pageNumber) {
     }
 }
 
-async function scrapeTest(testUrl) {
+async function scrapeTest(testObj) {
+    const testUrl = testObj.url;
+    const title = testObj.title;
     try {
         const response = await axios.get(testUrl, { timeout: 15000 });
         const $ = cheerio.load(response.data);
-        const title = $('h2').first().text().trim();
 
         const audioSrc = $('iframe#player').attr('src') || $('iframe').first().attr('src');
         if (!audioSrc) return null; // If there is no audio, we might skip or let it fail, but audio is required here.
