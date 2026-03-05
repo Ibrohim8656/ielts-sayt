@@ -28,12 +28,14 @@ body {
     color: var(--text-main);
 }
 
-body:not(.home-body) {
+body:not(.home-body):not(.profile-body):not(.auth-body) {
     overflow: hidden;
     /* Home dan tashqari */
 }
 
-.home-body {
+.home-body,
+.profile-body,
+.auth-body {
     overflow: auto;
 }
 
