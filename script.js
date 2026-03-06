@@ -190,21 +190,25 @@ function finishTest(isReviewMode = false) {
 
             radios.forEach(r => {
                 r.disabled = true;
+                const parent = r.closest('.option') || r.parentElement;
+
                 if (r.checked) {
                     answered = true;
                     userAnswer = r.value;
                     if (r.value.toLowerCase().trim() === expectedAnswer) {
                         isCorrect = true;
-                        r.closest('.option').classList.add('checked-correct');
+                        if (parent) parent.classList.add('checked-correct');
                     } else {
-                        r.closest('.option').classList.add('checked-wrong');
+                        if (parent) parent.classList.add('checked-wrong');
                     }
                 }
 
                 // Show the correct answer visually if they were wrong
                 if (!isCorrect && r.value.toLowerCase().trim() === expectedAnswer) {
-                    r.closest('.option').style.border = "2px dashed var(--success-color)";
-                    r.closest('.option').style.background = "#fff";
+                    if (parent) {
+                        parent.style.border = "2px dashed var(--success-color)";
+                        parent.style.background = "#f0fdf4"; // equivalent to success-bg
+                    }
                 }
             });
 
