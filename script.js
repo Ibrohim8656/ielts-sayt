@@ -683,3 +683,79 @@ const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
 }
+
+// ==========================================
+// TEXT HIGHLIGHTING LOGIC
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Inject tooltip UI into body
+    const tooltip = document.createElement('div');
+    tooltip.className = 'hl-tooltip';
+    tooltip.innerHTML = `
+        <button class="hl-btn-yellow" data-color="#fef08a" title="Sariq"></button>
+        <button class="hl-btn-green" data-color="#bbf7d0" title="Yashil"></button>
+        <button class="hl-btn-red" data-color="#fca5a5" title="Qizil"></button>
+        <button class="hl-btn-clear" data-color="clear" title="Tozalash">✖</button>
+    `;
+    document.body.appendChild(tooltip);
+
+    // Show Tooltip on Mouse Up
+    document.addEventListener('mouseup', (e) => {
+        // Only allow highlighting inside passage-content
+        const passage = e.target.closest('.passage-content');
+
+        if (!passage) {
+            // Hide tooltip if clicking outside
+            if (!e.target.closest('.hl-tooltip')) {
+                tooltip.style.display = 'none';
+            }
+            return;
+        }
+
+        setTimeout(() => {
+            const selection = window.getSelection();
+            const text = selection.toString().trim();
+
+            if (text.length > 0 && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+
+                // Position above the selection
+                tooltip.style.top = `${rect.top + window.scrollY - 45}px`;
+                tooltip.style.left = `${rect.left + window.scrollX + (rect.width / 2) - 60}px`;
+                tooltip.style.display = 'flex';
+            } else {
+                tooltip.style.display = 'none';
+            }
+        }, 10);
+    });
+
+    // Apply color when button is clicked
+    tooltip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const color = btn.getAttribute('data-color');
+        const passage = document.querySelector('.passage-content');
+
+        if (passage) {
+            // Enable editing to allow execCommand without breaking HTML structure
+            passage.contentEditable = "true";
+
+            if (color === 'clear') {
+                // Remove formatting (background)
+                document.execCommand('backColor', false, 'transparent');
+            } else {
+                // Apply background color
+                document.execCommand('backColor', false, color);
+            }
+
+            // Disable editing right after
+            passage.contentEditable = "false";
+        }
+
+        tooltip.style.display = 'none';
+        window.getSelection().removeAllRanges();
+    });
+});

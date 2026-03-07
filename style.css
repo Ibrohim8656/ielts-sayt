@@ -888,3 +888,98 @@ body.dark-mode .admin-score-item {
     color: var(--text-muted);
     margin-bottom: 25px;
 }
+
+/* ---------------------------------- */
+/* TEXT HIGHLIGHTING FEATURE          */
+/* ---------------------------------- */
+.highlight-yellow {
+    background-color: #fef08a;
+    /* Tailwind yellow-200 */
+    border-radius: 2px;
+}
+
+.highlight-green {
+    background-color: #bbf7d0;
+    /* Tailwind green-200 */
+    border-radius: 2px;
+}
+
+.highlight-red {
+    background-color: #fca5a5;
+    /* Tailwind red-300 */
+    border-radius: 2px;
+}
+
+body.dark-mode .highlight-yellow {
+    background-color: rgba(234, 179, 8, 0.4);
+    color: white;
+}
+
+body.dark-mode .highlight-green {
+    background-color: rgba(34, 197, 94, 0.4);
+    color: white;
+}
+
+body.dark-mode .highlight-red {
+    background-color: rgba(239, 68, 68, 0.4);
+    color: white;
+}
+
+/* Tooltip container */
+.hl-tooltip {
+    position: absolute;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    border-radius: 8px;
+    display: none;
+    z-index: 9999;
+    flex-direction: row;
+    gap: 5px;
+}
+
+body.dark-mode .hl-tooltip {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.hl-tooltip button {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s;
+}
+
+.hl-tooltip button:hover {
+    transform: scale(1.1);
+}
+
+.hl-btn-yellow {
+    background: #fef08a;
+}
+
+.hl-btn-green {
+    background: #bbf7d0;
+}
+
+.hl-btn-red {
+    background: #fca5a5;
+}
+
+.hl-btn-clear {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+body.dark-mode .hl-btn-clear {
+    background: #334155;
+    color: #cbd5e1;
+}
