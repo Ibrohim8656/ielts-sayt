@@ -421,20 +421,20 @@ function updateHeader() {
     if (token && userName) {
         if (userRole === 'admin') {
             nav.innerHTML = `
-                            < a href = "admin.html" class="nav-btn" >👨‍🏫 Admin Panel</a >
-                                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
-                    `;
+                <a href="admin.html" class="nav-btn">👨‍🏫 Admin Panel</a>
+                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
+            `;
         } else {
             nav.innerHTML = `
-                        < a href = "profile.html" class="nav-btn" >👤 ${userName}</a >
-                            <button onclick="logout()" class="nav-btn logout">Chiqish</button>
-                    `;
+                <a href="profile.html" class="nav-btn">👤 ${userName}</a>
+                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
+            `;
         }
     } else {
         nav.innerHTML = `
-                        < a href = "login.html" class="nav-btn" > Kirish</a >
-                            <a href="register.html" class="nav-btn primary">Ro'yxatdan o'tish</a>
-                    `;
+            <a href="login.html" class="nav-btn">Kirish</a>
+            <a href="register.html" class="nav-btn primary">Ro'yxatdan o'tish</a>
+        `;
     }
 
     headerElem.appendChild(nav);
