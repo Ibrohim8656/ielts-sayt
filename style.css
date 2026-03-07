@@ -892,37 +892,11 @@ body.dark-mode .admin-score-item {
 /* ---------------------------------- */
 /* TEXT HIGHLIGHTING FEATURE          */
 /* ---------------------------------- */
-.highlight-yellow {
-    background-color: #fef08a;
-    /* Tailwind yellow-200 */
-    border-radius: 2px;
-}
 
-.highlight-green {
-    background-color: #bbf7d0;
-    /* Tailwind green-200 */
-    border-radius: 2px;
-}
-
-.highlight-red {
-    background-color: #fca5a5;
-    /* Tailwind red-300 */
-    border-radius: 2px;
-}
-
-body.dark-mode .highlight-yellow {
-    background-color: rgba(234, 179, 8, 0.4);
-    color: white;
-}
-
-body.dark-mode .highlight-green {
-    background-color: rgba(34, 197, 94, 0.4);
-    color: white;
-}
-
-body.dark-mode .highlight-red {
-    background-color: rgba(239, 68, 68, 0.4);
-    color: white;
+/* Global text highlight tweaks for visibility */
+.passage-content span[style*="color: rgb("],
+.passage-content font[color] {
+    font-weight: 600;
 }
 
 /* Tooltip container */
@@ -959,15 +933,18 @@ body.dark-mode .hl-tooltip {
 }
 
 .hl-btn-yellow {
-    background: #fef08a;
+    background: #eab308;
+    color: white;
 }
 
 .hl-btn-green {
-    background: #bbf7d0;
+    background: #22c55e;
+    color: white;
 }
 
 .hl-btn-red {
-    background: #fca5a5;
+    background: #ef4444;
+    color: white;
 }
 
 .hl-btn-clear {

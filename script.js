@@ -692,9 +692,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const tooltip = document.createElement('div');
     tooltip.className = 'hl-tooltip';
     tooltip.innerHTML = `
-        <button class="hl-btn-yellow" data-color="#fef08a" title="Sariq"></button>
-        <button class="hl-btn-green" data-color="#bbf7d0" title="Yashil"></button>
-        <button class="hl-btn-red" data-color="#fca5a5" title="Qizil"></button>
+        <button class="hl-btn-yellow" data-color="#eab308" title="Sariq"></button>
+        <button class="hl-btn-green" data-color="#22c55e" title="Yashil"></button>
+        <button class="hl-btn-red" data-color="#ef4444" title="Qizil"></button>
         <button class="hl-btn-clear" data-color="clear" title="Tozalash">✖</button>
     `;
     document.body.appendChild(tooltip);
@@ -744,11 +744,12 @@ document.addEventListener('DOMContentLoaded', () => {
             passage.contentEditable = "true";
 
             if (color === 'clear') {
-                // Remove formatting (background)
-                document.execCommand('backColor', false, 'transparent');
+                // Remove formatting (text color)
+                document.execCommand('removeFormat', false, null);
             } else {
-                // Apply background color
-                document.execCommand('backColor', false, color);
+                // Apply text color directly
+                document.execCommand('styleWithCSS', false, true);
+                document.execCommand('foreColor', false, color);
             }
 
             // Disable editing right after
