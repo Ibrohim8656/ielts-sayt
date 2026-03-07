@@ -189,10 +189,14 @@
                     card.className = 'user-card';
 
                     let scoresHtml = '';
+                    let percentSum = 0;
+                    let scoresCount = 0;
                     if (user.scores && user.scores.length > 0) {
                         user.scores.forEach(score => {
                             const date = new Date(score.date).toLocaleString('uz-UZ', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                             const percent = Math.round((score.correct / score.total) * 100);
+                            percentSum += percent;
+                            scoresCount++;
                             scoresHtml += `
                                 <div class="admin-score-item">
                                     <div class="admin-score-details">
@@ -207,10 +211,17 @@
                         scoresHtml = '<div style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px 0;">Hali test ishlamagan</div>';
                     }
 
+                    const avgPercent = scoresCount > 0 ? Math.round(percentSum / scoresCount) : 0;
+                    const avgHtml = scoresCount > 0 ? `<div style="font-size:0.85rem; color: var(--primary-color); margin-top:5px; font-weight:600;">O'rtacha natija: ${avgPercent}%</div>` : '';
+
                     card.innerHTML = `
-                        <div class="user-card-header">
-                            <div class="user-name">${user.name}</div>
-                            <div class="user-phone">📞 ${user.phone}</div>
+                        <div class="user-card-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <div class="user-name">${user.name}</div>
+                                <div class="user-phone">📞 ${user.phone}</div>
+                                ${avgHtml}
+                            </div>
+                            <button onclick="deleteUser(${user.id})" style="background:var(--error-color); color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem; box-shadow:0 2px 4px rgba(239,68,68,0.2);">O'chirish</button>
                         </div>
                         <div class="user-scores-list">
                             <strong style="display:block; margin-bottom:10px; font-size:0.9rem; color:var(--text-main);">Oxirgi Natijalar:</strong>
@@ -225,6 +236,25 @@
                 document.getElementById('users-grid').innerHTML = '<div class="no-records">Ma\'lumotlarni yuklashda xatolik yuz berdi. Sizda admin huquqi yo\'q bo\'lishi mumkin.</div>';
             }
         });
+
+        window.deleteUser = async function (userId) {
+            if (!confirm("Rostdan ham ushbu o'quvchini va uning barcha natijalarini o'chirib tashlamoqchimisiz?")) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert("O'chirishda xatolik yuz berdi.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Server bilan bog'lanishda xatolik.");
+            }
+        };
     </script>
 </body>
 

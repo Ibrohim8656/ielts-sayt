@@ -120,9 +120,29 @@ const initSchema = async () => {
             section VARCHAR(255) NOT NULL,
             correct INTEGER NOT NULL,
             total INTEGER NOT NULL,
+            start_time TIMESTAMP,
+            end_time TIMESTAMP,
+            user_answers TEXT,
             date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )`);
+
+        // Safely add missing columns to scores table for existing databases
+        if (!isPg) {
+            sqliteDb.run(`ALTER TABLE scores ADD COLUMN start_time TEXT`, (e) => { });
+            sqliteDb.run(`ALTER TABLE scores ADD COLUMN end_time TEXT`, (e) => { });
+            sqliteDb.run(`ALTER TABLE scores ADD COLUMN user_answers TEXT`, (e) => { });
+        } else {
+            // Postgres ignores duplicate column errors if using catch
+            const addCols = [
+                'ALTER TABLE scores ADD COLUMN start_time TIMESTAMP',
+                'ALTER TABLE scores ADD COLUMN end_time TIMESTAMP',
+                'ALTER TABLE scores ADD COLUMN user_answers JSONB'
+            ];
+            for (let c of addCols) {
+                try { await query(c); } catch (e) { /* ignore already exists */ }
+            }
+        }
 
         // Reading Tests Table
         await query(`CREATE TABLE IF NOT EXISTS reading_tests (

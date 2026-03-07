@@ -112,17 +112,34 @@ app.get('/api/profile', verifyToken, async (req, res) => {
     }
 });
 
+// Get specific Score Detail (for review mode)
+app.get('/api/score/detail', verifyToken, async (req, res) => {
+    const { section } = req.query;
+    try {
+        const result = await db.query('SELECT * FROM scores WHERE user_id = ? AND section = ? ORDER BY date DESC LIMIT 1', [req.user.id, section]);
+        if (result.rows.length === 0) return res.json(null);
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // Save Score
 app.post('/api/score', verifyToken, async (req, res) => {
-    const { section, correct, total } = req.body;
+    const { section, correct, total, start_time, end_time, user_answers } = req.body;
     if (!section || correct === undefined || !total) {
         return res.status(400).json({ error: 'Invalid score data' });
     }
 
     try {
-        await db.query('INSERT INTO scores (user_id, section, correct, total) VALUES (?, ?, ?, ?)', [req.user.id, section, correct, total]);
+        const answersStr = user_answers ? JSON.stringify(user_answers) : null;
+        await db.query(
+            'INSERT INTO scores (user_id, section, correct, total, start_time, end_time, user_answers) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, section, correct, total, start_time, end_time, answersStr]
+        );
         res.status(201).json({ message: 'Score saved' });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Database error' });
     }
 });
@@ -163,6 +180,19 @@ app.get('/api/admin/users', verifyToken, verifyAdmin, async (req, res) => {
         res.json(Object.values(usersMap));
     } catch (err) {
         res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Admin - Delete User
+app.delete('/api/admin/users/:id', verifyToken, verifyAdmin, async (req, res) => {
+    const userId = req.params.id;
+    try {
+        await db.query('DELETE FROM scores WHERE user_id = ?', [userId]);
+        await db.query('DELETE FROM users WHERE id = ?', [userId]);
+        res.json({ message: 'User and their scores deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting user:', err);
+        res.status(500).json({ error: 'Database error deleting user' });
     }
 });
 

@@ -142,6 +142,8 @@ function finishTest(isReviewMode = false) {
     submitBtn.textContent = isReviewMode ? "Test Yechimlari Tahlili" : "Finished & Checked";
 
     let correctCount = 0;
+    const userAnswersMap = {};
+    const testEndTime = new Date().toISOString();
 
     // LUKUP OVER ALL ANSWERS TO CALCULATE SCORES AND RENDER FEEDBACK
     const allQuestions = Object.keys(ANSWERS_DATA);
@@ -228,6 +230,7 @@ function finishTest(isReviewMode = false) {
             }
         }
 
+        userAnswersMap[qId] = userAnswer;
         if (isCorrect) correctCount++;
 
         // Feedback html yozuvini shakllantirish
@@ -293,20 +296,77 @@ function finishTest(isReviewMode = false) {
             body: JSON.stringify({
                 section: section,
                 correct: correctCount,
-                total: questionsOnPage
+                total: questionsOnPage,
+                start_time: window.testStartTime || new Date().toISOString(),
+                end_time: testEndTime,
+                user_answers: userAnswersMap
             })
         }).catch(err => console.error("Error saving score:", err));
     }
 }
 
+// Global start time tracking
+window.testStartTime = new Date().toISOString();
+
 // Check for review mode on load
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('review') === 'true') {
+        const token = localStorage.getItem('token');
+
         // Biraz vaqt berib, HTML to'liq chizilgach finishTest() ni ishga tushiring
-        setTimeout(() => {
+        setTimeout(async () => {
+            if (token) {
+                try {
+                    let sectionName = window.location.pathname.includes('listening')
+                        ? `Listening: ${window.currentListeningTestTitle || "Test"}`
+                        : `Reading: ${window.currentReadingTestTitle || "Test"}`;
+
+                    const res = await fetch(`/api/score/detail?section=${encodeURIComponent(sectionName)}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        const savedData = await res.json();
+                        if (savedData && savedData.user_answers) {
+                            const answersMap = typeof savedData.user_answers === 'string' ? JSON.parse(savedData.user_answers) : savedData.user_answers;
+
+                            // Kiritilgan javoblarni joyiga qo'yib chiqamiz
+                            Object.keys(answersMap).forEach(qId => {
+                                const inputElem = document.getElementById(qId) || document.querySelector(`input[name="${qId}"]`);
+                                if (inputElem) {
+                                    if (inputElem.type === "radio") {
+                                        const radios = document.querySelectorAll(`input[name="${qId}"]`);
+                                        radios.forEach(r => { if (r.value === answersMap[qId]) r.checked = true; });
+                                    } else {
+                                        inputElem.value = answersMap[qId];
+                                    }
+                                }
+                            });
+
+                            // Vaqtlarni ko'rsatish
+                            if (savedData.start_time && savedData.end_time) {
+                                const st = new Date(savedData.start_time).toLocaleString('uz-UZ');
+                                const et = new Date(savedData.end_time).toLocaleString('uz-UZ');
+                                const infoDiv = document.createElement('div');
+                                infoDiv.style.padding = "10px";
+                                infoDiv.style.background = "#e0f2fe";
+                                infoDiv.style.marginBottom = "15px";
+                                infoDiv.style.borderRadius = "8px";
+                                infoDiv.innerHTML = `<strong>Sizning natijangiz:</strong> Boshlandi: ${st} | Tugatildi: ${et}`;
+                                const pane = document.querySelector('.right-pane') || document.body;
+                                pane.prepend(infoDiv);
+
+                                const tDisp = document.getElementById("timer-display");
+                                if (tDisp) tDisp.innerHTML = "Past Score Review";
+                            }
+                        }
+                    }
+                } catch (e) { console.error("Could not fetch old answers", e); }
+            }
+
             finishTest(true);
-        }, 300);
+        }, 800);
     }
 });
 
@@ -361,20 +421,20 @@ function updateHeader() {
     if (token && userName) {
         if (userRole === 'admin') {
             nav.innerHTML = `
-                <a href="admin.html" class="nav-btn">👨‍🏫 Admin Panel</a>
-                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
-            `;
+                            < a href = "admin.html" class="nav-btn" >👨‍🏫 Admin Panel</a >
+                                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
+                    `;
         } else {
             nav.innerHTML = `
-                <a href="profile.html" class="nav-btn">👤 ${userName}</a>
-                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
-            `;
+                        < a href = "profile.html" class="nav-btn" >👤 ${userName}</a >
+                            <button onclick="logout()" class="nav-btn logout">Chiqish</button>
+                    `;
         }
     } else {
         nav.innerHTML = `
-            <a href="login.html" class="nav-btn">Kirish</a>
-            <a href="register.html" class="nav-btn primary">Ro'yxatdan o'tish</a>
-        `;
+                        < a href = "login.html" class="nav-btn" > Kirish</a >
+                            <a href="register.html" class="nav-btn primary">Ro'yxatdan o'tish</a>
+                    `;
     }
 
     headerElem.appendChild(nav);
