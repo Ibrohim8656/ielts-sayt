@@ -148,7 +148,7 @@ app.post('/api/score', verifyToken, async (req, res) => {
 app.get('/api/admin/users', verifyToken, verifyAdmin, async (req, res) => {
     try {
         const sql = `
-            SELECT u.id, u.name, u.phone, s.section, s.correct, s.total, s.date
+            SELECT u.id, u.name, u.phone, s.section, s.correct, s.total, s.date, s.start_time, s.end_time
             FROM users u
             LEFT JOIN scores s ON u.id = s.user_id
             WHERE u.role != 'admin'
@@ -172,7 +172,9 @@ app.get('/api/admin/users', verifyToken, verifyAdmin, async (req, res) => {
                     section: row.section,
                     correct: row.correct,
                     total: row.total,
-                    date: row.date
+                    date: row.date,
+                    start_time: row.start_time,
+                    end_time: row.end_time
                 });
             }
         });

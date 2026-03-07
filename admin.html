@@ -197,11 +197,19 @@
                             const percent = Math.round((score.correct / score.total) * 100);
                             percentSum += percent;
                             scoresCount++;
+
+                            let timeInfo = `<span class="admin-score-date">${date}</span>`;
+                            if (score.start_time && score.end_time) {
+                                const st = new Date(score.start_time).toLocaleString('uz-UZ');
+                                const et = new Date(score.end_time).toLocaleString('uz-UZ');
+                                timeInfo = `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Boshlandi: ${st} | Tugatildi: ${et}</div>`;
+                            }
+
                             scoresHtml += `
                                 <div class="admin-score-item">
                                     <div class="admin-score-details">
                                         <span class="admin-score-section">${score.section}</span>
-                                        <span class="admin-score-date">${date}</span>
+                                        ${timeInfo}
                                     </div>
                                     <div class="admin-score-result">${score.correct}/${score.total} (${percent}%)</div>
                                 </div>
