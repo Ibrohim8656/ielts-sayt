@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS PRACTICE ZEMSTARK - Writing Topics</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .topics-header {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .topic-card {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-decoration: none;
+            color: var(--text-main);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 5px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-card h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .topic-card .meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .start-btn {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+    <script>if (!localStorage.getItem('token')) { window.location.href = 'login.html'; }</script>
+</head>
+
+<body class="home-body">
+
+    <!-- Navbar -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html">IELTS PRACTICE <span class="brand-sub">ZEMSTARK</span></a></h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <!-- Auth Nav will be injected here by script.js?v=2 -->
+        </div>
+    </header>
+
+    <main class="home-container">
+        <div class="topics-header">
+            <h2>Writing Practice Tests</h2>
+            <p>O'zingiz xohlagan mavzuni tanlang va IELTS Writing mashqini boshlang</p>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Mavzu nomini qidirish...">
+            </div>
+        </div>
+
+        <div class="topics-grid" id="topics-container">
+            <!-- Mavzular JavaScript orqali shu yerga qo'shiladi -->
+        </div>
+    </main>
+
+    <script src="test_data.js"></script>
+    <script src="script.js?v=2"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('topics-container');
+
+            // 1. Fetch user scores
+            let completedScores = {};
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const res = await fetch('/api/profile', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        // store latest score per section
+                        data.scores.forEach(s => {
+                            if (!completedScores[s.section]) {
+                                completedScores[s.section] = s;
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("Could not fetch user scores", e);
+                }
+            }
+
+            // 2. Fetch Writing Topics from Backend API
+            try {
+                const testsRes = await fetch('/api/writing-tests');
+                if (testsRes.ok) {
+                    const tests = await testsRes.json();
+
+                    if (tests.length === 0) {
+                        container.innerHTML = "<p>Ma'lumotlar topilmadi.</p>";
+                        return;
+                    }
+
+                    tests.forEach(data => {
+                        const id = data.id;
+                        const sectionName = `Writing: ${data.title}`;
+                        const existingScore = completedScores[sectionName];
+
+                        const card = document.createElement('a');
+                        card.className = "topic-card";
+
+                        if (existingScore) {
+                            const percent = Math.round((existingScore.correct / existingScore.total) * 100);
+                            card.href = `writing.html?id=${id}&review=true`;
+                            card.style.opacity = "0.7";
+                            card.style.borderLeftColor = "var(--success-color)";
+
+                            card.innerHTML = `
+                                <div>
+                                    <h3>${data.title} <span style="font-size:0.9rem; color:var(--success-color);">✓ Bajarilgan</span></h3>
+                                    <div class="meta">Min words: ${data.min_words}</div>
+                                </div>
+                                <div class="start-btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                    Natija tahlili: ${existingScore.correct}/${existingScore.total} (${percent}%)
+                                </div>
+                            `;
+                        } else {
+                            card.href = `writing.html?id=${id}`;
+                            card.innerHTML = `
+                                <div>
+                                    <h3>${data.title}</h3>
+                                    <div class="meta">Min words: ${data.min_words}</div>
+                                </div>
+                                <div class="start-btn">Mashqni boshlash ➔</div>
+                            `;
+                        }
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = "<p>API bilan ulanishda xatolik yuz berdi.</p>";
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = "<p>Server ishlamayapti.</p>";
+            }
+
+            // 3. Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function () {
+                const term = this.value.toLowerCase();
+                const cards = container.querySelectorAll('.topic-card');
+                let found = false;
+
+                cards.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    if (title.includes(term)) {
+                        card.style.display = 'flex';
+                        found = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                const existingMsg = document.getElementById('not-found-msg');
+                if (existingMsg) existingMsg.remove();
+
+                if (!found && cards.length > 0) {
+                    const msg = document.createElement('p');
+                    msg.id = 'not-found-msg';
+                    msg.textContent = "Bunday mavzu topilmadi.";
+                    msg.style.textAlign = "center";
+                    msg.style.width = "100%";
+                    msg.style.color = "var(--text-muted)";
+                    msg.style.marginTop = "20px";
+                    msg.style.gridColumn = "1 / -1";
+                    container.appendChild(msg);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

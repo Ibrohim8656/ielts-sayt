@@ -27,21 +27,8 @@
     <main class="split-container">
         <!-- Chap Tomon - Task -->
         <section class="pane left-pane">
-            <div class="passage-content">
-                <h2>Writing Task 2</h2>
-                <p><strong>You should spend about 40 minutes on this task.</strong></p>
-                <p>Write about the following topic:</p>
-
-                <div
-                    style="background:var(--bg-color); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--primary-color);">
-                    <p style="font-weight: 600; font-size: 1.15rem;">Some people believe that unpaid community service
-                        should be a compulsory part of high school programs.</p>
-                    <p style="font-weight: 600; font-size: 1.15rem;">To what extent do you agree or disagree?</p>
-                </div>
-
-                <p>Give reasons for your answer and include any relevant examples from your own knowledge or experience.
-                </p>
-                <p><strong>Write at least 250 words.</strong></p>
+            <div class="passage-content" id="writing_task_container">
+                <p>Loading task...</p>
             </div>
         </section>
 
@@ -59,7 +46,8 @@
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 0 5px;">
                     <p id="word_count" style="font-weight: 600; color: var(--text-muted); font-size: 1.1rem;">Words:
-                        <span id="wc_number" style="color: var(--text-main);">0</span>
+                        <span id="wc_number" style="color: var(--text-main);">0</span> / <span
+                            id="wc_required">250</span>
                     </p>
                 </div>
             </div>
@@ -107,6 +95,37 @@
     </div>
 
     <script>
+        let requiredWords = 250;
+        let testTitle = "Writing Task";
+
+        // Sahifa yuklanganda testni olib kelish
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testId = urlParams.get('id');
+
+            if (!testId) {
+                document.getElementById('writing_task_container').innerHTML = "<p>Test ID berilmadi.</p>";
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/writing-tests/${testId}`);
+                if (res.ok) {
+                    const test = await res.json();
+                    document.getElementById('writing_task_container').innerHTML = test.content;
+                    requiredWords = test.min_words || 250;
+                    document.getElementById('wc_required').textContent = requiredWords;
+                    testTitle = test.title;
+                    document.title = `IELTS PRACTICE ZEMSTARK - ${testTitle}`;
+                } else {
+                    document.getElementById('writing_task_container').innerHTML = "<p>Test topilmadi.</p>";
+                }
+            } catch (e) {
+                console.error("Xatolik:", e);
+                document.getElementById('writing_task_container').innerHTML = "<p>Server ishlamayapti.</p>";
+            }
+        });
+
         // Oddiy Word count
         const textarea = document.getElementById('writing_answer');
         const countSpan = document.getElementById('wc_number');
@@ -116,7 +135,7 @@
             let count = text === '' ? 0 : text.split(/\s+/).length;
             countSpan.textContent = count;
 
-            if (count >= 250) {
+            if (count >= requiredWords) {
                 countSpan.style.color = "var(--success-color)";
             } else {
                 countSpan.style.color = "var(--text-main)";

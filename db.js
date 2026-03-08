@@ -164,6 +164,14 @@ const initSchema = async () => {
             answers TEXT
         )`);
 
+        // Writing Tests Table
+        await query(`CREATE TABLE IF NOT EXISTS writing_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title VARCHAR UNIQUE,
+            content TEXT,
+            min_words INTEGER DEFAULT 250
+        )`);
+
         // Seed Admin User
         const adminPhone = 'admin';
         const adminPass = '123parol123';
