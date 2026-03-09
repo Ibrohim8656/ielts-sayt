@@ -112,7 +112,7 @@ const writeDataToDB = async () => {
     process.exit(0);
 }
 
-// 2 sekund kutish (DB initialize bo'lishi uchun db.js orqali)
+// 15 sekund kutish (DB initialize bo'lishi uchun db.js orqali, uzoqrok render db uchun)
 setTimeout(() => {
     writeDataToDB();
-}, 2000);
+}, 15000);

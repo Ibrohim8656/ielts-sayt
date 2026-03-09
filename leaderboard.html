@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS PRACTICE ZEMSTARK - Reyting</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .leaderboard-header {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .leaderboard-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .rank-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rank-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .rank-item:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .rank-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            width: 50px;
+            text-align: center;
+        }
+
+        .rank-1 .rank-number {
+            color: #fbbf24;
+            font-size: 2rem;
+        }
+
+        /* Gold */
+        .rank-2 .rank-number {
+            color: #94a3b8;
+            font-size: 1.8rem;
+        }
+
+        /* Silver */
+        .rank-3 .rank-number {
+            color: #b45309;
+            font-size: 1.6rem;
+        }
+
+        /* Bronze */
+
+        .rank-info {
+            flex-grow: 1;
+            padding-left: 20px;
+        }
+
+        .rank-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0 0 5px 0;
+        }
+
+        .rank-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .rank-score {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--success-color);
+            text-align: right;
+        }
+
+        .rank-score span {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: normal;
+            color: var(--text-muted);
+        }
+
+        .empty-leaderboard {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body class="home-body">
+    <!-- Navbar -->
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html">IELTS PRACTICE <span class="brand-sub">ZEMSTARK</span></a></h1>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">🌙</button>
+            <nav class="auth-nav">
+                <a href="index.html" class="nav-btn">Asosiy menyu</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="home-container" style="padding: 20px;">
+        <div class="leaderboard-header">
+            <h2>🏆 Kuchlilar O'nligi (Top 10)</h2>
+            <p>Eng ko'p to'g'ri javob topgan foydalanuvchilar reytingi</p>
+        </div>
+
+        <div class="leaderboard-container">
+            <ul class="rank-list" id="leaderboard-list">
+                <div class="empty-leaderboard">Yuklanmoqda...</div>
+            </ul>
+        </div>
+    </main>
+
+    <script src="script.js?v=2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const listContainer = document.getElementById('leaderboard-list');
+
+            try {
+                const res = await fetch('/api/leaderboard');
+                if (res.ok) {
+                    const data = await res.json();
+
+                    if (data.length === 0) {
+                        listContainer.innerHTML = '<div class="empty-leaderboard">Hali hech kim test ishlamadi. Birinchi bo\'ling!</div>';
+                        return;
+                    }
+
+                    listContainer.innerHTML = '';
+                    data.forEach((user, index) => {
+                        const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                        const li = document.createElement('li');
+                        li.className = `rank-item ${rankClass}`;
+
+                        let rankDisplay = index + 1;
+                        if (index === 0) rankDisplay = "🥇";
+                        if (index === 1) rankDisplay = "🥈";
+                        if (index === 2) rankDisplay = "🥉";
+
+                        li.innerHTML = `
+                            <div class="rank-number">${rankDisplay}</div>
+                            <div class="rank-info">
+                                <h3 class="rank-name">${user.name}</h3>
+                                <p class="rank-meta">Jami ishlangan testlar: ${user.tests_taken}</p>
+                            </div>
+                            <div class="rank-score">
+                                ${user.total_correct}
+                                <span>To'g'ri javoblar</span>
+                            </div>
+                        `;
+                        listContainer.appendChild(li);
+                    });
+                } else {
+                    listContainer.innerHTML = '<div class="empty-leaderboard">Ma\'lumotlarni yuklashda xatolik yuz berdi.</div>';
+                }
+            } catch (err) {
+                console.error("Leaderboard Error:", err);
+                listContainer.innerHTML = '<div class="empty-leaderboard">Server bilan bog\'lanishda xatolik.</div>';
+            }
+        });
+    </script>
+</body>
+
+</html>

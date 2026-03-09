@@ -644,6 +644,8 @@ async function fetchProfileData() {
         const user = data.user;
         const scores = data.scores;
 
+        window.userScores = scores; // Expose globally for Chart.js in profile.html
+
         document.getElementById('profile-name').textContent = user.name;
         document.getElementById('profile-phone').textContent = user.phone;
 

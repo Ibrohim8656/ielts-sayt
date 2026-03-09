@@ -198,6 +198,30 @@ app.delete('/api/admin/users/:id', verifyToken, verifyAdmin, async (req, res) =>
     }
 });
 
+// Leaderboard API
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const sql = `
+            SELECT u.id, u.name, 
+                   COUNT(s.id) as tests_taken, 
+                   SUM(s.correct) as total_correct, 
+                   SUM(s.total) as total_questions
+            FROM users u
+            JOIN scores s ON u.id = s.user_id
+            WHERE u.role != 'admin'
+            GROUP BY u.id, u.name
+            HAVING SUM(s.correct) > 0
+            ORDER BY total_correct DESC
+            LIMIT 10
+        `;
+        const result = await db.query(sql);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error fetching leaderboard' });
+    }
+});
+
 // Reading Tests API
 app.get('/api/reading-tests', async (req, res) => {
     try {

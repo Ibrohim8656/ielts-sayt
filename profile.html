@@ -30,9 +30,14 @@
             </div>
         </div>
 
-        <div class="scores-section">
-            <h3>Mening Natijalarim</h3>
+        <div class="scores-section" style="margin-top: 30px;">
+            <h3>Natijalar O'sish Dinamikasi</h3>
+            <div
+                style="background: var(--surface-color); padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid var(--border-color);">
+                <canvas id="scoreChart" width="400" height="200"></canvas>
+            </div>
 
+            <h3>Mening Natijalarim</h3>
             <div class="scores-list" id="scores-container">
                 <p class="loading-msg">Natijalar yuklanmoqda...</p>
                 <!-- Scores will be injected here via JS -->
@@ -40,6 +45,7 @@
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js?v=2"></script>
     <script>
         // Check if user is logged in before rendering profile
@@ -47,9 +53,93 @@
             if (!localStorage.getItem('token')) {
                 window.location.href = 'login.html';
             } else {
-                fetchProfileData();
+                fetchProfileData().then(() => renderChart());
             }
         });
+
+        // Global function to be called after fetchProfileData populated window.userScores
+        async function renderChart() {
+            if (!window.userScores || window.userScores.length === 0) return;
+
+            // Sort scores by date ascending for the chart
+            const sorted = [...window.userScores].reverse();
+
+            const labels = [];
+            const listeningData = [];
+            const readingData = [];
+
+            sorted.forEach(s => {
+                const dateRaw = new Date(s.date);
+                const dateStr = `${dateRaw.getDate()}/${dateRaw.getMonth() + 1} ${dateRaw.getHours()}:${(dateRaw.getMinutes() < 10 ? '0' : '') + dateRaw.getMinutes()}`;
+
+                // percentage string mapping
+                let pct = Math.round((s.correct / s.total) * 100);
+
+                labels.push(dateStr);
+
+                if (s.section.toLowerCase().includes('listening')) {
+                    listeningData.push(pct);
+                    readingData.push(null); // Keep gaps
+                } else if (s.section.toLowerCase().includes('reading')) {
+                    readingData.push(pct);
+                    listeningData.push(null);
+                } else {
+                    listeningData.push(null);
+                    readingData.push(null);
+                }
+            });
+
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Listening Natijasi (%)',
+                            data: listeningData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            spanGaps: true,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Reading Natijasi (%)',
+                            data: readingData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            spanGaps: true,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function (value) { return value + '%' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 
