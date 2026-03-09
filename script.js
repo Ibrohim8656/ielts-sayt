@@ -659,7 +659,15 @@ async function fetchProfileData() {
 
         scores.forEach(score => {
             const date = new Date(score.date).toLocaleString('uz-UZ');
-            const percent = Math.round((score.correct / score.total) * 100);
+            let scoreResultText = "";
+
+            if (score.correct < 0) {
+                // Pending status for Writing/Speaking
+                scoreResultText = `<span style="color: #fbbf24; font-weight: 500;">⏳ Tekshirilmoqda...</span>`;
+            } else {
+                const percent = Math.round((score.correct / score.total) * 100);
+                scoreResultText = `${score.correct}/${score.total} (${percent}%)`;
+            }
 
             const div = document.createElement('div');
             div.className = 'score-item';
@@ -668,7 +676,7 @@ async function fetchProfileData() {
                     <div class="score-section-name">${score.section}</div>
                     <div class="score-date">${date}</div>
                 </div>
-                <div class="score-result">${score.correct}/${score.total} (${percent}%)</div>
+                <div class="score-result">${scoreResultText}</div>
             `;
             scoresContainer.appendChild(div);
         });

@@ -109,6 +109,31 @@
             color: var(--text-muted);
             font-style: italic;
         }
+
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
     </style>
 </head>
 
@@ -129,7 +154,15 @@
     <main class="home-container" style="padding: 20px;">
         <div class="leaderboard-header">
             <h2>🏆 Kuchlilar O'nligi (Top 10)</h2>
-            <p>Eng ko'p to'g'ri javob topgan foydalanuvchilar reytingi</p>
+            <p>O'rtacha eng yuqori foiz natijaga ega foydalanuvchilar reytingi</p>
+        </div>
+
+        <div class="category-tabs">
+            <button class="tab-btn active" onclick="loadLeaderboard('')">Umumiy</button>
+            <button class="tab-btn" onclick="loadLeaderboard('reading')">Reading</button>
+            <button class="tab-btn" onclick="loadLeaderboard('listening')">Listening</button>
+            <button class="tab-btn" onclick="loadLeaderboard('writing')">Writing</button>
+            <button class="tab-btn" onclick="loadLeaderboard('speaking')">Speaking</button>
         </div>
 
         <div class="leaderboard-container">
@@ -137,20 +170,41 @@
                 <div class="empty-leaderboard">Yuklanmoqda...</div>
             </ul>
         </div>
+
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">
+            Eslatma: Writing va Speaking natijalari ro'yxatda paydo bo'lishi uchun, o'qituvchi tomonidan Telegram bot
+            orqali avval baholangan bo'lishi kerak.
+        </p>
     </main>
 
     <script src="script.js?v=2"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLeaderboard('');
+        });
+
+        async function loadLeaderboard(type) {
+            // Update active tab styling
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((type === '' && btn.textContent === 'Umumiy') || btn.textContent.toLowerCase() === type) {
+                    btn.classList.add('active');
+                }
+            });
+
             const listContainer = document.getElementById('leaderboard-list');
+            listContainer.innerHTML = '<div class="empty-leaderboard">Yuklanmoqda...</div>';
 
             try {
-                const res = await fetch('/api/leaderboard');
+                let url = '/api/leaderboard';
+                if (type) url += `?type=${type}`;
+
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
 
                     if (data.length === 0) {
-                        listContainer.innerHTML = '<div class="empty-leaderboard">Hali hech kim test ishlamadi. Birinchi bo\'ling!</div>';
+                        listContainer.innerHTML = '<div class="empty-leaderboard">Bu bo\'limda hali hech kim natija qayd etmagan. Birinchi bo\'ling!</div>';
                         return;
                     }
 
@@ -172,8 +226,8 @@
                                 <p class="rank-meta">Jami ishlangan testlar: ${user.tests_taken}</p>
                             </div>
                             <div class="rank-score">
-                                ${user.total_correct}
-                                <span>To'g'ri javoblar</span>
+                                ${user.percentage || 0}%
+                                <span>O'rtacha natija</span>
                             </div>
                         `;
                         listContainer.appendChild(li);
@@ -185,7 +239,7 @@
                 console.error("Leaderboard Error:", err);
                 listContainer.innerHTML = '<div class="empty-leaderboard">Server bilan bog\'lanishda xatolik.</div>';
             }
-        });
+        }
     </script>
 </body>
 

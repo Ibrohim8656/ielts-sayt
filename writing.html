@@ -167,55 +167,57 @@
             document.getElementById('submit-modal').classList.remove('active');
         }
 
-        // Telegramga yuborish
         function sendToTelegram() {
             const studentName = document.getElementById('student_name').value.trim();
             const essayText = document.getElementById('writing_answer').value.trim();
             const wordCount = document.getElementById('wc_number').textContent;
+            const token = localStorage.getItem('token');
 
             if (!studentName) {
-                alert("Please enter your name!");
+                alert("Iltimos, ismingizni kiriting!");
+                return;
+            }
+
+            if (!token) {
+                alert("Siz tizimga kirmagansiz!");
                 return;
             }
 
             const sendBtn = document.getElementById('final-submit-btn');
-            sendBtn.innerHTML = '<span class="loader"></span> Sending...';
+            sendBtn.innerHTML = '<span class="loader"></span> Yuborilmoqda...';
             sendBtn.disabled = true;
 
-            // Xat Formati
-            const message = `🎓 *Yangi Insho (Writing Task)*\n\n👤 *O'quvchi:* ${studentName}\n📝 *Word Count:* ${wordCount} words\n\n📜 *Insho:* \n${essayText}`;
-
-            // API ga jo'natish
-            const BOT_TOKEN = "8632543520:AAF8lMWGCwI9iFogYGsQMnUt4iwyVj7G0A4";
-            const CHAT_ID = "474179084";
-
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            fetch('/api/submit-writing', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    text: message,
-                    parse_mode: "Markdown"
+                    title: testTitle,
+                    content: essayText,
+                    words: wordCount,
+                    studentName: studentName
                 })
             })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.ok) {
-                        alert('Successfully submitted to your teacher!');
+                    if (data.scoreId) {
+                        alert("Ustozga yuborildi! Baholanganda profilingizda ko'rasiz.");
                         closeSubmitModal();
-                        sendBtn.innerHTML = 'Send to Teacher';
+                        sendBtn.innerHTML = 'Ustozga Yuborish';
                         sendBtn.disabled = false;
-                        document.getElementById('submit-btn').textContent = "Submitted ✓";
+                        document.getElementById('submit-btn').textContent = "Yuborilgan ✓";
                         document.getElementById('submit-btn').disabled = true;
                     } else {
-                        alert('Error sending message. Please try again.');
-                        sendBtn.innerHTML = 'Send to Teacher';
+                        alert('Yuborishda xatolik: ' + (data.error || 'Noma\'lum xatolik'));
+                        sendBtn.innerHTML = 'Ustozga Yuborish';
                         sendBtn.disabled = false;
                     }
                 })
                 .catch(err => {
-                    alert('Network error.');
-                    sendBtn.innerHTML = 'Send to Teacher';
+                    alert('Tarmoq xatosi.');
+                    sendBtn.innerHTML = 'Ustozga Yuborish';
                     sendBtn.disabled = false;
                 });
         }

@@ -4,10 +4,45 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const db = require('./db');
+const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = 'ielts_practice_secret_key_123'; // In production, use environment variables
+
+// --- TELEGRAM BOT CONFIG ---
+const BOT_TOKEN = "8632543520:AAF8lMWGCwI9iFogYGsQMnUt4iwyVj7G0A4";
+const CHAT_ID = "474179084";
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+
+bot.on('message', async (msg) => {
+    // Agar xabar o'qituvchi tomonidan botning avvalgi xabariga "Reply" qilingan bo'lsa
+    if (msg.reply_to_message && msg.reply_to_message.text) {
+        const match = msg.reply_to_message.text.match(/#ID_(\d+)/);
+        if (match) {
+            const scoreId = match[1];
+            // Xabardan faqat raqamni ajratib olishga urinish
+            const gradeMatch = msg.text.match(/(\d+)/);
+
+            if (gradeMatch) {
+                const grade = parseInt(gradeMatch[1]);
+                if (grade >= 0 && grade <= 100) {
+                    try {
+                        await db.query('UPDATE scores SET correct = ?, total = 100 WHERE id = ?', [grade, scoreId]);
+                        bot.sendMessage(msg.chat.id, `✅ Muvaffaqiyatli saqlandi! [Baza ID: ${scoreId}] natijasi ${grade}% etib belgilandi.`);
+                    } catch (e) {
+                        console.error('Telegram grading error:', e);
+                        bot.sendMessage(msg.chat.id, `❌ Baza bilan aloqada xatolik yuz berdi.`);
+                    }
+                } else {
+                    bot.sendMessage(msg.chat.id, `⚠️ Baho 0 va 100 orasida bo'lishi kerak. Masalan: 85`);
+                }
+            } else {
+                bot.sendMessage(msg.chat.id, `⚠️ Iltimos, faqat foiz miqdorini (raqam yordamida) yozing.`);
+            }
+        }
+    }
+});
 
 app.use(cors());
 app.use(express.json());
@@ -144,6 +179,32 @@ app.post('/api/score', verifyToken, async (req, res) => {
     }
 });
 
+// Submit Writing (For Teacher Grading)
+app.post('/api/submit-writing', verifyToken, async (req, res) => {
+    const { title, content, words, studentName } = req.body;
+    const sectionName = `Writing: ${title}`;
+
+    try {
+        // Pending holati uchun correct = -1 qilib saqlaymiz (100 dan)
+        const result = await db.query(
+            'INSERT INTO scores (user_id, section, correct, total, user_answers) VALUES (?, ?, ?, ?, ?)',
+            [req.user.id, sectionName, -1, 100, JSON.stringify({ text: content, words })]
+        );
+
+        const scoreId = result.lastID;
+
+        // Telegramga yuborish
+        const message = `🎓 *Yangi Insho (Writing Task)*\n\n🆔 *Baza ID:* #ID_${scoreId}\n👤 *O'quvchi:* ${studentName} (${req.user.phone})\n📝 *So'zlar soni:* ${words}\n\n📜 *Insho:*\n${content}\n\n_Ushbu xabarga Reply qilib, faqatgina bahoni raqamda (Masalan: 85) yozing!_`;
+
+        bot.sendMessage(CHAT_ID, message, { parse_mode: 'Markdown' });
+
+        res.json({ message: 'Qabul qilindi va o\'qituvchiga yuborildi', scoreId });
+    } catch (err) {
+        console.error("Submit writing error:", err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Admin - Get All Users & Scores
 app.get('/api/admin/users', verifyToken, verifyAdmin, async (req, res) => {
     try {
@@ -200,21 +261,33 @@ app.delete('/api/admin/users/:id', verifyToken, verifyAdmin, async (req, res) =>
 
 // Leaderboard API
 app.get('/api/leaderboard', async (req, res) => {
+    const { type } = req.query; // e.g: 'reading', 'listening', 'writing', 'speaking'
+
+    // Fallback: if no type defined, load all except pending.
+    let sectionFilter = "AND s.correct >= 0";
+    const params = [];
+
+    if (type) {
+        sectionFilter += " AND LOWER(s.section) LIKE ?";
+        params.push(`%${type}%`);
+    }
+
     try {
         const sql = `
             SELECT u.id, u.name, 
                    COUNT(s.id) as tests_taken, 
                    SUM(s.correct) as total_correct, 
-                   SUM(s.total) as total_questions
+                   SUM(s.total) as total_questions,
+                   ROUND((SUM(CAST(s.correct AS FLOAT)) / SUM(s.total)) * 100) as percentage
             FROM users u
             JOIN scores s ON u.id = s.user_id
-            WHERE u.role != 'admin'
+            WHERE u.role != 'admin' ${sectionFilter}
             GROUP BY u.id, u.name
-            HAVING SUM(s.correct) > 0
-            ORDER BY total_correct DESC
+            HAVING SUM(s.total) > 0
+            ORDER BY percentage DESC, total_correct DESC
             LIMIT 10
         `;
-        const result = await db.query(sql);
+        const result = await db.query(sql, params);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
