@@ -285,7 +285,6 @@ app.get('/api/leaderboard', async (req, res) => {
             GROUP BY u.id, u.name
             HAVING SUM(s.total) > 0
             ORDER BY percentage DESC, total_correct DESC
-            LIMIT 10
         `;
         const result = await db.query(sql, params);
         res.json(result.rows);
