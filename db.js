@@ -62,17 +62,23 @@ const query = (sql, params = []) => {
             // Use word boundary to only replace VARCHAR when it's not immediately followed by (
             pgSql = pgSql.replace(/\bVARCHAR\b(?!\()/gi, 'VARCHAR(255)');
 
+            // Append RETURNING id for INSERT queries if it doesn't already have it
+            if (pgSql.trim().toUpperCase().startsWith('INSERT INTO') && !pgSql.toUpperCase().includes('RETURNING')) {
+                pgSql = pgSql + ' RETURNING id';
+            }
+
             // Postgres pool.query fails if params is undefined, but [] is perfectly fine.
             pool.query(pgSql, params || [], (err, result) => {
                 if (err) {
                     console.error('PostgreSQL Execution Error:', err.message, '\nQuery:', pgSql, '\nParams:', params);
                     return reject(err);
                 }
+
                 // Unified standard response: { rows: [...], lastID: result.insertId }
+                // For INSERT queries returning id, lastID is in result.rows[0].id
                 resolve({
                     rows: result.rows || [],
-                    // Postgres typically requires RETURNING id. Since we don't have it uniformly, return null safely.
-                    lastID: (result.rows && result.rows.length) ? result.rows[0].id : null
+                    lastID: (result.rows && result.rows.length && result.rows[0].id) ? result.rows[0].id : null
                 });
             });
         } else {

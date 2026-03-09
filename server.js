@@ -72,9 +72,13 @@ app.post('/api/register', async (req, res) => {
 
 // Login
 app.post('/api/login', async (req, res) => {
-    const { phone, password } = req.body;
+    let { phone, password } = req.body;
     if (!phone || !password) {
         return res.status(400).json({ error: 'Please provide phone and password' });
+    }
+
+    if (phone.toLowerCase() === 'admin') {
+        phone = 'admin';
     }
 
     try {
@@ -126,9 +130,20 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-const verifyAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+const verifyAdmin = async (req, res, next) => {
+    if (req.user && (req.user.role === 'admin' || req.user.phone === 'admin')) {
         next();
+    } else if (req.user) {
+        try {
+            const result = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+            if (result.rows.length > 0 && result.rows[0].role === 'admin') {
+                next();
+            } else {
+                res.status(403).json({ error: 'Access denied: Requires admin role' });
+            }
+        } catch (e) {
+            res.status(403).json({ error: 'Access denied: Requires admin role' });
+        }
     } else {
         res.status(403).json({ error: 'Access denied: Requires admin role' });
     }
@@ -193,10 +208,17 @@ app.post('/api/submit-writing', verifyToken, async (req, res) => {
 
         const scoreId = result.lastID;
 
-        // Telegramga yuborish
-        const message = `🎓 *Yangi Insho (Writing Task)*\n\n🆔 *Baza ID:* #ID_${scoreId}\n👤 *O'quvchi:* ${studentName} (${req.user.phone})\n📝 *So'zlar soni:* ${words}\n\n📜 *Insho:*\n${content}\n\n_Ushbu xabarga Reply qilib, faqatgina bahoni raqamda (Masalan: 85) yozing!_`;
+        // HTML taglarini tozalash (Telegram bot HTML rejimida xato bermasligi uchun)
+        const escapeHTML = str => (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const safeStudentName = escapeHTML(studentName);
+        const safeContent = escapeHTML(content);
 
-        bot.sendMessage(CHAT_ID, message, { parse_mode: 'Markdown' });
+        // Telegramga yuborish (HTML rejimida jo'natamiz, yozilgan esseda belgi bo'lsa xato bermaydi)
+        const message = `🎓 <b>Yangi Insho (Writing Task)</b>\n\n🆔 <b>Baza ID:</b> #ID_${scoreId}\n👤 <b>O'quvchi:</b> ${safeStudentName} (${req.user.phone})\n📝 <b>So'zlar soni:</b> ${words}\n\n📜 <b>Insho:</b>\n<pre>${safeContent}</pre>\n\n<i>Ushbu xabarga Reply qilib, faqatgina bahoni raqamda (Masalan: 85) yozing!</i>`;
+
+        bot.sendMessage(CHAT_ID, message, { parse_mode: 'HTML' }).catch(err => {
+            console.error("Telegramga yuborishda xatolik:", err.response ? err.response.body : err);
+        });
 
         res.json({ message: 'Qabul qilindi va o\'qituvchiga yuborildi', scoreId });
     } catch (err) {

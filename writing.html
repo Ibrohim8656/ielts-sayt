@@ -74,25 +74,7 @@
         </div>
     </div>
 
-    <!-- Modal for student name -->
-    <div class="modal-overlay" id="submit-modal">
-        <div class="modal-content">
-            <h2>Send Answer</h2>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">Your essay will be sent directly to your teacher's
-                Telegram.</p>
 
-            <div class="input-group">
-                <label for="student_name">Full Name</label>
-                <input type="text" id="student_name" placeholder="E.g. Alisher Karimov" required>
-            </div>
-
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button class="btn-primary" style="background: #e2e8f0; color: #334155;"
-                    onclick="closeSubmitModal()">Cancel</button>
-                <button class="btn-primary" id="final-submit-btn" onclick="sendToTelegram()">Send to Teacher</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         let requiredWords = 250;
