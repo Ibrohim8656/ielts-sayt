@@ -405,6 +405,21 @@ db.query(`SELECT id, questions, answers FROM listening_tests WHERE title LIKE '%
     }
 }).catch(err => console.error("Could not run startup migration:", err));
 
+// Provisional Fix: Add "Average life expectancy" writing task
+db.query(`SELECT id FROM writing_tests WHERE title LIKE '%The chart shows the average life expectancy for males and females in 1900, 1950 and 1990%'`).then(result => {
+    if (!result || !result.rows || result.rows.length === 0) {
+        const title = "The chart shows the average life expectancy for males and females in 1900, 1950 and 1990.";
+        const html = `<p><strong>The chart below shows the average life expectancy for males and females in 1900, 1950 and 1990 in 5 countries.</strong></p>
+<p>Summarise the information by selecting and reporting the main features, and make comparisons where relevant.</p>
+<div style='text-align: center; margin: 20px 0;'>
+    <img src='images/life_expectancy.png' alt='Life expectancy chart' style='max-width: 100%; border: 1px solid #ccc; border-radius: 8px;'/>
+</div>`;
+        db.query('INSERT INTO writing_tests (title, content, min_words) VALUES (?, ?, ?)', [title, html, 100])
+            .then(() => console.log('Successfully added "Life Expectancy" writing task on startup.'))
+            .catch(err => console.error('Error inserting Life Expectancy task', err));
+    }
+}).catch(err => console.error("Could not check writing_tests migration:", err));
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     if (db.isPg) {
