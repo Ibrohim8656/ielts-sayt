@@ -387,6 +387,24 @@ app.get('/api/writing-tests/:id', async (req, res) => {
     }
 });
 
+// Provisional Fix for Water hyacinth test bug
+db.query(`SELECT id, questions, answers FROM listening_tests WHERE title LIKE '%Water hyacinth%'`).then(result => {
+    if (result && result.rows && result.rows.length > 0) {
+        const row = result.rows[0];
+        if (row.questions.includes('type="checkbox"')) {
+            let html = row.questions.replace(/<p><span style="font-weight: 400;"><span><b>A<\/b><\/span>[\s\S]*Electricity production is affected\.<\/span><\/p>/,
+                `<p><b>Problem 1: </b><select id="q1"><option value=""></option><option value="A">A - plants and fish are poisoned</option><option value="B">B - Farmers cannot fish</option><option value="C">C - the dam's structure is damaged</option><option value="D">D - Electricity production is affected</option></select></p>
+<p><b>Problem 2: </b><select id="q2"><option value=""></option><option value="A">A - plants and fish are poisoned</option><option value="B">B - Farmers cannot fish</option><option value="C">C - the dam's structure is damaged</option><option value="D">D - Electricity production is affected</option></select></p>`);
+            let answers = typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers;
+            answers.q1.answer = 'B';
+            answers.q2.answer = 'D';
+            db.query('UPDATE listening_tests SET questions = ?, answers = ? WHERE id = ?', [html, JSON.stringify(answers), row.id])
+                .then(() => console.log('Successfully patched Water Hyacinth test data on startup.'))
+                .catch(err => console.error('Error patching Water Hyacinth', err));
+        }
+    }
+}).catch(err => console.error("Could not run startup migration:", err));
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     if (db.isPg) {

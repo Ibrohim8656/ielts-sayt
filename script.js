@@ -177,7 +177,10 @@ function finishTest(isReviewMode = false) {
             inputElem.disabled = true;
             if (inputElem.value.trim() !== "") userAnswer = inputElem.value;
 
-            if (userAnswer.toLowerCase().trim() === expectedAnswer) {
+            // Ko'p variantli javoblarni tekshirish (Masalan: "urban centres/centres")
+            const validAnswers = expectedAnswer.split('/').map(ans => ans.trim());
+
+            if (validAnswers.includes(userAnswer.toLowerCase().trim())) {
                 isCorrect = true;
                 inputElem.classList.add('checked-correct');
                 inputElem.style.borderColor = "var(--success-color)";
@@ -194,10 +197,13 @@ function finishTest(isReviewMode = false) {
                 r.disabled = true;
                 const parent = r.closest('.option') || r.parentElement;
 
+                // Ko'p variantli javoblarni tekshirish
+                const validAnswers = expectedAnswer.split('/').map(ans => ans.trim());
+
                 if (r.checked) {
                     answered = true;
                     userAnswer = r.value;
-                    if (r.value.toLowerCase().trim() === expectedAnswer) {
+                    if (validAnswers.includes(r.value.toLowerCase().trim())) {
                         isCorrect = true;
                         if (parent) parent.classList.add('checked-correct');
                     } else {
@@ -206,7 +212,7 @@ function finishTest(isReviewMode = false) {
                 }
 
                 // Show the correct answer visually if they were wrong
-                if (!isCorrect && r.value.toLowerCase().trim() === expectedAnswer) {
+                if (!isCorrect && validAnswers.includes(r.value.toLowerCase().trim())) {
                     if (parent) {
                         parent.style.border = "2px dashed var(--success-color)";
                         parent.style.background = "#f0fdf4"; // equivalent to success-bg
@@ -220,7 +226,9 @@ function finishTest(isReviewMode = false) {
             inputElem.disabled = true;
             if (inputElem.value && inputElem.value.trim() !== "") userAnswer = inputElem.value;
 
-            if (userAnswer.toLowerCase().trim() === expectedAnswer) {
+            const validAnswers = expectedAnswer.split('/').map(ans => ans.trim());
+
+            if (validAnswers.includes(userAnswer.toLowerCase().trim())) {
                 isCorrect = true;
                 inputElem.classList.add('checked-correct');
                 inputElem.style.borderColor = "var(--success-color)";
