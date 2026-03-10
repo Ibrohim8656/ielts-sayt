@@ -81,6 +81,15 @@ app.post('/api/login', async (req, res) => {
         phone = 'admin';
     }
 
+    // Hardcoded Admin Bypass
+    if (phone === 'admin') {
+        if (password !== '123parol123') {
+            return res.status(401).json({ error: 'Invalid admin credentials' });
+        }
+        const token = jwt.sign({ id: 0, name: 'Admin', phone: 'admin', role: 'admin' }, SECRET_KEY, { expiresIn: '7d' });
+        return res.json({ message: 'Login successful', token, name: 'Admin', role: 'admin' });
+    }
+
     try {
         const result = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -88,10 +97,6 @@ app.post('/api/login', async (req, res) => {
         const user = result.rows[0];
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
-
-        if (phone === 'admin') {
-            user.role = 'admin';
-        }
 
         const token = jwt.sign({ id: user.id, name: user.name, phone: user.phone, role: user.role }, SECRET_KEY, { expiresIn: '7d' });
         res.json({ message: 'Login successful', token, name: user.name, role: user.role });
