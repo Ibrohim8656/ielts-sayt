@@ -220,27 +220,31 @@
             sendBtn.disabled = true;
 
             const BOT_TOKEN = "8632543520:AAF8lMWGCwI9iFogYGsQMnUt4iwyVj7G0A4";
-            const CHAT_ID = "935349418";
+            const CHAT_IDS = ["474179084", "935349418"];
 
             // Foydalanuvchi ma'lumoti matni
             const caption = `🎤 *Yangi Ovozli Javob (Speaking)*\n👤 *O'quvchi:* ${studentName}\n⏱ *Davomiylik:* ${timeDisplay.textContent}`;
 
-            // Ovoz faylini Telegram API siga jo'natish uchun FormData yaratamiz
-            const formData = new FormData();
-            formData.append('chat_id', CHAT_ID);
-            formData.append('caption', caption);
-            formData.append('parse_mode', "Markdown");
-            // audioFile fayl nomi "speaking_answer.webm" (yoki ogg) bo'ladi
-            formData.append('voice', audioBlob, 'speaking_answer.webm');
+            // Create a function to send to a specific chat ID
+            const sendToChat = (chatId) => {
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('caption', caption);
+                formData.append('parse_mode', "Markdown");
+                formData.append('voice', audioBlob, 'speaking_answer.webm');
 
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVoice`, {
-                method: 'POST',
-                body: formData
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.ok) {
-                        alert('Audio successfully sent to teacher!');
+                return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVoice`, {
+                    method: 'POST',
+                    body: formData
+                }).then(res => res.json());
+            };
+
+            // Send to all chat IDs concurrently
+            Promise.all(CHAT_IDS.map(id => sendToChat(id)))
+                .then(results => {
+                    const allSuccess = results.every(data => data.ok);
+                    if (allSuccess) {
+                        alert('Audio successfully sent to teachers!');
                         closeSubmitModal();
                         sendBtn.innerHTML = 'Send to Teacher';
                         sendBtn.disabled = false;
@@ -249,12 +253,14 @@
                         sendVoiceBtn.style.background = "var(--success-color)";
                         sendVoiceBtn.disabled = true;
                     } else {
-                        alert('Error sending voice. File might be too large or network issue.');
+                        console.error('Some or all requests failed:', results);
+                        alert('Error sending voice to one or more teachers. File might be too large.');
                         sendBtn.innerHTML = 'Send to Teacher';
                         sendBtn.disabled = false;
                     }
                 })
                 .catch(err => {
+                    console.error('Fetch chain error:', err);
                     alert('Network error.');
                     sendBtn.innerHTML = 'Send to Teacher';
                     sendBtn.disabled = false;

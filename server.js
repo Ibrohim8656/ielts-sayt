@@ -12,7 +12,7 @@ const SECRET_KEY = 'ielts_practice_secret_key_123'; // In production, use enviro
 
 // --- TELEGRAM BOT CONFIG ---
 const BOT_TOKEN = "8632543520:AAF8lMWGCwI9iFogYGsQMnUt4iwyVj7G0A4";
-const CHAT_ID = "474179084";
+const CHAT_IDS = ["474179084", "935349418"];
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 bot.on('message', async (msg) => {
@@ -216,8 +216,10 @@ app.post('/api/submit-writing', verifyToken, async (req, res) => {
         // Telegramga yuborish (HTML rejimida jo'natamiz, yozilgan esseda belgi bo'lsa xato bermaydi)
         const message = `🎓 <b>Yangi Insho (Writing Task)</b>\n\n🆔 <b>Baza ID:</b> #ID_${scoreId}\n👤 <b>O'quvchi:</b> ${safeStudentName} (${req.user.phone})\n📝 <b>So'zlar soni:</b> ${words}\n\n📜 <b>Insho:</b>\n<pre>${safeContent}</pre>\n\n<i>Ushbu xabarga Reply qilib, faqatgina bahoni raqamda (Masalan: 85) yozing!</i>`;
 
-        bot.sendMessage(CHAT_ID, message, { parse_mode: 'HTML' }).catch(err => {
-            console.error("Telegramga yuborishda xatolik:", err.response ? err.response.body : err);
+        CHAT_IDS.forEach(chatId => {
+            bot.sendMessage(chatId, message, { parse_mode: 'HTML' }).catch(err => {
+                console.error(`Telegramga yuborishda xatolik (ID: ${chatId}):`, err.response ? err.response.body : err);
+            });
         });
 
         res.json({ message: 'Qabul qilindi va o\'qituvchiga yuborildi', scoreId });
