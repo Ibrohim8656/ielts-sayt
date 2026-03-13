@@ -556,6 +556,93 @@
             }
         };
 
+        // Helper to convert plain text with syntax {N} and [N|A,B,C] to HTML
+        window.parseTextToHTML = function (text) {
+            if (!text) return '';
+            let html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // Replace Dropdowns: [1|TRUE,FALSE,NOT GIVEN]
+            html = html.replace(/\[(\d+)\|([^\]]+)\]/g, (match, qNum, options) => {
+                let optsHtml = `<option value=""> </option>`;
+                options.split(',').forEach(opt => {
+                    let o = opt.trim();
+                    optsHtml += `<option value="${o}">${o}</option>`;
+                });
+                return `<b>${qNum} </b><select id="q${qNum}" onchange="gdd(this)">${optsHtml}</select>`;
+            });
+
+            // Replace Inputs: {8}
+            html = html.replace(/\{(\d+)\}/g, (match, qNum) => {
+                return `<b>${qNum} </b><input type="text" required="" id="q${qNum}" onkeyup="gtb(this)">`;
+            });
+
+            // Convert newlines to paragraphs
+            let paragraphs = html.split(/\n\n+/);
+            html = paragraphs.map(p => {
+                let content = p.replace(/\n/g, '<br>');
+                return `<p>${content}</p>`;
+            }).join('\n');
+
+            return html;
+        };
+
+        // Helper to convert HTML back to plain text syntax
+        window.parseHTMLToText = function (html) {
+            if (!html) return '';
+            let text = html;
+
+            // Replace Selects with [N|A,B,C]
+            text = text.replace(/<b>\s*(\d+)\s*<\/b>\s*<select[^>]*>([\s\S]*?)<\/select>/gi, (match, qNum, optionsHtml) => {
+                let options = [];
+                let optRegex = /<option[^>]*value="([^"]+)"[^>]*>/gi;
+                let optMatch;
+                while ((optMatch = optRegex.exec(optionsHtml)) !== null) {
+                    if (optMatch[1].trim() !== '') {
+                        options.push(optMatch[1]);
+                    }
+                }
+                return `[${qNum}|${options.join(',')}]`;
+            });
+
+            // Replace Selects without bold tags
+            text = text.replace(/<select[^>]*id="q(\d+)"[^>]*>([\s\S]*?)<\/select>/gi, (match, qNum, optionsHtml) => {
+                let options = [];
+                let optRegex = /<option[^>]*value="([^"]+)"[^>]*>/gi;
+                let optMatch;
+                while ((optMatch = optRegex.exec(optionsHtml)) !== null) {
+                    if (optMatch[1].trim() !== '') {
+                        options.push(optMatch[1]);
+                    }
+                }
+                return `[${qNum}|${options.join(',')}]`;
+            });
+
+            // Replace Inputs with {N}
+            text = text.replace(/<b>\s*(\d+)\s*<\/b>\s*<input[^>]+id="q\d+"[^>]*>/gi, (match, qNum) => {
+                return `{${qNum}}`;
+            });
+            text = text.replace(/<input[^>]+id="q(\d+)"[^>]*>/gi, (match, qNum) => {
+                return `{${qNum}}`;
+            });
+
+            // Strip styling tags and convert structural tags to newlines
+            text = text.replace(/<br\s*\/?>/gi, '\n');
+            text = text.replace(/<\/p>/gi, '\n\n');
+            text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+            text = text.replace(/<\/div>/gi, '\n\n');
+            text = text.replace(/<\/li>/gi, '\n');
+
+            text = text.replace(/<[^>]+>/g, '');
+
+            text = text.replace(/&nbsp;/g, ' ');
+            text = text.replace(/&lt;/g, '<');
+            text = text.replace(/&gt;/g, '>');
+            text = text.replace(/&amp;/g, '&');
+
+            text = text.replace(/\n{3,}/g, '\n\n');
+            return text.trim();
+        };
+
         window.formatAnswersToText = function (answers) {
             if (!answers) return '';
             let jsonObj = answers;
@@ -589,8 +676,8 @@
                 document.getElementById('modal-title').textContent = "Testni tahrirlash";
                 document.getElementById('cms-id').value = test.id;
                 document.getElementById('cms-type').value = document.getElementById('test-type-filter').value;
-                document.getElementById('cms-passage').value = test.passage || '';
-                document.getElementById('cms-questions').value = test.questions || '';
+                document.getElementById('cms-passage').value = parseHTMLToText(test.passage);
+                document.getElementById('cms-questions').value = parseHTMLToText(test.questions);
                 document.getElementById('cms-answers').value = formatAnswersToText(test.answers);
             } else {
                 document.getElementById('modal-title').textContent = "Yangi test qo'shish";
@@ -686,8 +773,8 @@
 
             const payload = {
                 title: generatedTitle,
-                passage: document.getElementById('cms-passage').value,
-                questions: document.getElementById('cms-questions').value,
+                passage: parseTextToHTML(document.getElementById('cms-passage').value),
+                questions: parseTextToHTML(document.getElementById('cms-questions').value),
                 answers: JSON.stringify(answersJson)
             };
 
