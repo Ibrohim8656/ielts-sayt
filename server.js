@@ -292,6 +292,85 @@ app.delete('/api/admin/users/:id', verifyToken, verifyAdmin, async (req, res) =>
     }
 });
 
+// Admin - Get All Tests
+app.get('/api/admin/tests/:type', verifyToken, verifyAdmin, async (req, res) => {
+    const type = req.params.type;
+    const table = type === 'reading' ? 'reading_tests' : 'listening_tests';
+    try {
+        const result = await db.query(`SELECT id, title FROM ${table} ORDER BY id DESC`);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: `Database error fetching ${type} tests` });
+    }
+});
+
+// Admin - Get Single Test Details
+app.get('/api/admin/tests/:type/:id', verifyToken, verifyAdmin, async (req, res) => {
+    const { type, id } = req.params;
+    const table = type === 'reading' ? 'reading_tests' : 'listening_tests';
+    try {
+        const result = await db.query(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Test not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: `Database error fetching test` });
+    }
+});
+
+// Admin - Create a New Test
+app.post('/api/admin/tests/:type', verifyToken, verifyAdmin, async (req, res) => {
+    const type = req.params.type;
+    const table = type === 'reading' ? 'reading_tests' : 'listening_tests';
+    const { title, passage, questions, answers } = req.body;
+
+    try {
+        let answersData = typeof answers === 'string' ? answers : JSON.stringify(answers);
+        if (type === 'reading') {
+            await db.query(`INSERT INTO ${table} (title, passage, questions, answers) VALUES (?, ?, ?, ?)`,
+                [title, passage, questions, answersData]);
+        } else {
+            await db.query(`INSERT INTO ${table} (title, passage, questions, answers) VALUES (?, ?, ?, ?)`,
+                [title, passage || '', questions, answersData]);
+        }
+        res.status(201).json({ message: 'Test created successfully' });
+    } catch (err) {
+        res.status(500).json({ error: `Database error creating ${type} test`, details: err.message });
+    }
+});
+
+// Admin - Update an Existing Test
+app.put('/api/admin/tests/:type/:id', verifyToken, verifyAdmin, async (req, res) => {
+    const { type, id } = req.params;
+    const table = type === 'reading' ? 'reading_tests' : 'listening_tests';
+    const { title, passage, questions, answers } = req.body;
+
+    try {
+        let answersData = typeof answers === 'string' ? answers : JSON.stringify(answers);
+        if (type === 'reading') {
+            await db.query(`UPDATE ${table} SET title = ?, passage = ?, questions = ?, answers = ? WHERE id = ?`,
+                [title, passage, questions, answersData, id]);
+        } else {
+            await db.query(`UPDATE ${table} SET title = ?, passage = ?, questions = ?, answers = ? WHERE id = ?`,
+                [title, passage || '', questions, answersData, id]);
+        }
+        res.json({ message: 'Test updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: `Database error updating ${type} test`, details: err.message });
+    }
+});
+
+// Admin - Delete a Test
+app.delete('/api/admin/tests/:type/:id', verifyToken, verifyAdmin, async (req, res) => {
+    const { type, id } = req.params;
+    const table = type === 'reading' ? 'reading_tests' : 'listening_tests';
+    try {
+        await db.query(`DELETE FROM ${table} WHERE id = ?`, [id]);
+        res.json({ message: 'Test deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: `Database error deleting ${type} test` });
+    }
+});
+
 // Leaderboard API
 app.get('/api/leaderboard', async (req, res) => {
     const { type } = req.query; // e.g: 'reading', 'listening', 'writing', 'speaking'

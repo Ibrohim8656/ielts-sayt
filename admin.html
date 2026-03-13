@@ -129,6 +129,197 @@
             background: var(--border-color);
             border-radius: 3px;
         }
+
+        /* Tabs Styling */
+        .admin-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .admin-tab {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-muted);
+            border: none;
+            background: none;
+            position: relative;
+        }
+
+        .admin-tab.active {
+            color: var(--primary-color);
+        }
+
+        .admin-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Test Bank Styling */
+        .test-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .add-test-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .test-list {
+            background: var(--surface-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .test-item-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .test-actions button {
+            padding: 6px 12px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Modal Styling */
+        .cms-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cms-modal.active {
+            display: flex;
+        }
+
+        .cms-modal-content {
+            background: var(--surface-color);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .cms-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cms-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .cms-form-group {
+            margin-bottom: 20px;
+        }
+
+        .cms-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .cms-form-group input,
+        .cms-form-group textarea,
+        .cms-form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .cms-form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .cms-save-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
     </style>
     <script>if (!localStorage.getItem('token')) { window.location.href = 'login.html'; }</script>
 </head>
@@ -146,13 +337,72 @@
     <main class="admin-container">
         <div class="admin-header">
             <h2>👨‍🏫 O'qituvchi Boshqaruvi (Admin)</h2>
-            <div id="total-students">O'quvchilar: Yuklanmoqda...</div>
+            <div id="total-students">Yuklanmoqda...</div>
         </div>
 
-        <div class="users-grid" id="users-grid">
-            <div class="no-records">Ma'lumotlar yuklanmoqda...</div>
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchTab('students')">O'quvchilar</button>
+            <button class="admin-tab" onclick="switchTab('tests')">Testlar Xazinasi</button>
+        </div>
+
+        <div id="students-tab" class="tab-content active">
+            <div class="users-grid" id="users-grid">
+                <div class="no-records">Ma'lumotlar yuklanmoqda...</div>
+            </div>
+        </div>
+
+        <div id="tests-tab" class="tab-content">
+            <div class="test-controls">
+                <select id="test-type-filter" onchange="loadTestBank()"
+                    style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-weight: 600;">
+                    <option value="reading">Reading Testlar</option>
+                    <option value="listening">Listening Testlar</option>
+                </select>
+                <button class="add-test-btn" onclick="openTestModal()">+ Yangi Qo'shish</button>
+            </div>
+            <div class="test-list" id="test-list">
+                <div class="no-records">Testlar yuklanmoqda...</div>
+            </div>
         </div>
     </main>
+
+    <!-- CMS Modal -->
+    <div class="cms-modal" id="cms-modal">
+        <div class="cms-modal-content">
+            <div class="cms-modal-header">
+                <h3 id="modal-title">Test Qo'shish</h3>
+                <button class="cms-modal-close" onclick="closeTestModal()">×</button>
+            </div>
+            <form id="cms-form" onsubmit="saveTestRecord(event)">
+                <input type="hidden" id="cms-id">
+                <div class="cms-form-group">
+                    <label>Test Turi</label>
+                    <select id="cms-type" required>
+                        <option value="reading">Reading</option>
+                        <option value="listening">Listening</option>
+                    </select>
+                </div>
+                <div class="cms-form-group">
+                    <label>Test Sarlavhasi (Title)</label>
+                    <input type="text" id="cms-title" required placeholder="Masalan: The impact of climate change">
+                </div>
+                <div class="cms-form-group">
+                    <label>Matn / Passage HTML (Reading uchun)</label>
+                    <textarea id="cms-passage" placeholder="<p>Matn shu yerga yoziladi...</p>"></textarea>
+                </div>
+                <div class="cms-form-group">
+                    <label>Savollar HTML (Questions)</label>
+                    <textarea id="cms-questions" required placeholder="<h2>Questions 1-5</h2> ..."></textarea>
+                </div>
+                <div class="cms-form-group">
+                    <label>Javoblar (Answers JSON)</label>
+                    <textarea id="cms-answers" required
+                        placeholder='{"q1": {"answer": "TRUE"}, "q2": {"answer": "FALSE"}}'></textarea>
+                </div>
+                <button type="submit" class="cms-save-btn">Saqlash</button>
+            </form>
+        </div>
+    </div>
 
     <script src="script.js?v=2"></script>
     <script>
@@ -261,6 +511,164 @@
             } catch (err) {
                 console.error(err);
                 alert("Server bilan bog'lanishda xatolik.");
+            }
+        };
+
+        // CMS Logic
+        window.switchTab = function (tabName) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            if (tabName === 'tests') {
+                loadTestBank();
+            }
+        };
+
+        window.loadTestBank = async function () {
+            const type = document.getElementById('test-type-filter').value;
+            const token = localStorage.getItem('token');
+            const listContainer = document.getElementById('test-list');
+            listContainer.innerHTML = '<div class="no-records">Yuklanmoqda...</div>';
+
+            try {
+                const res = await fetch(`/api/admin/tests/${type}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Fetch xatosi');
+                const tests = await res.json();
+
+                if (tests.length === 0) {
+                    listContainer.innerHTML = '<div class="no-records">Hali testlar qo\'shilmagan.</div>';
+                    return;
+                }
+
+                listContainer.innerHTML = tests.map(t => `
+                    <div class="test-item">
+                        <div class="test-item-title">${t.id}. ${t.title || 'Nomsiz test'}</div>
+                        <div class="test-actions">
+                            <button class="btn-edit" onclick="editTest('${type}', ${t.id})">Tahrirlash</button>
+                            <button class="btn-delete" onclick="deleteTest('${type}', ${t.id})">O'chirish</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                listContainer.innerHTML = '<div class="no-records">Xatolik yuz berdi.</div>';
+            }
+        };
+
+        window.openTestModal = function (test = null) {
+            const modal = document.getElementById('cms-modal');
+            const form = document.getElementById('cms-form');
+            form.reset();
+
+            if (test) {
+                document.getElementById('modal-title').textContent = "Testni tahrirlash";
+                document.getElementById('cms-id').value = test.id;
+                document.getElementById('cms-type').value = document.getElementById('test-type-filter').value;
+                document.getElementById('cms-title').value = test.title || '';
+                document.getElementById('cms-passage').value = test.passage || '';
+                document.getElementById('cms-questions').value = test.questions || '';
+                document.getElementById('cms-answers').value = typeof test.answers === 'string' ? test.answers : JSON.stringify(test.answers, null, 2);
+            } else {
+                document.getElementById('modal-title').textContent = "Yangi test qo'shish";
+                document.getElementById('cms-id').value = '';
+                document.getElementById('cms-type').value = document.getElementById('test-type-filter').value;
+            }
+
+            modal.classList.add('active');
+        };
+
+        window.closeTestModal = function () {
+            document.getElementById('cms-modal').classList.remove('active');
+        };
+
+        window.editTest = async function (type, id) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/admin/tests/${type}/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const test = await res.json();
+                    openTestModal(test);
+                }
+            } catch (err) {
+                alert("Testni yuklashda xatolik!");
+            }
+        };
+
+        window.deleteTest = async function (type, id) {
+            if (!confirm("Haqiqatan ham ushbu testni o'chirmoqchimisiz?")) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/admin/tests/${type}/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    loadTestBank();
+                } else {
+                    alert("O'chirishda xatolik.");
+                }
+            } catch (err) {
+                alert("Server xatosi.");
+            }
+        };
+
+        window.saveTestRecord = async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('cms-id').value;
+            const type = document.getElementById('cms-type').value;
+            const token = localStorage.getItem('token');
+            const btn = document.querySelector('.cms-save-btn');
+
+            let answersJson;
+            try {
+                const rawAnswers = document.getElementById('cms-answers').value;
+                answersJson = JSON.parse(rawAnswers); // Validate JSON format
+            } catch (err) {
+                alert("Javoblar matni (Answers) to'g'ri JSON formatida emas. Iltimos, tekshiring.");
+                return;
+            }
+
+            const payload = {
+                title: document.getElementById('cms-title').value,
+                passage: document.getElementById('cms-passage').value,
+                questions: document.getElementById('cms-questions').value,
+                answers: JSON.stringify(answersJson) // Send as safe string
+            };
+
+            btn.disabled = true;
+            btn.textContent = "Saqlanmoqda...";
+
+            const url = id ? `/api/admin/tests/${type}/${id}` : `/api/admin/tests/${type}`;
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeTestModal();
+                    loadTestBank();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || "Saqlashda xatolik yuz berdi.");
+                }
+            } catch (err) {
+                alert("Xatolik!");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Saqlash";
             }
         };
     </script>
