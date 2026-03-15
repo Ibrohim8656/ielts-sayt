@@ -49,18 +49,61 @@ app.use(express.json());
 // Serve static files from the current folder
 app.use(express.static(path.join(__dirname)));
 
+// Middleware to verify token (defined here so it can be used in register)
+const verifyToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) return res.status(403).json({ error: 'No token provided' });
+
+    const bearerToken = token.split(' ')[1] || token;
+
+    jwt.verify(bearerToken, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(401).json({ error: 'Unauthorized' });
+        req.user = decoded;
+        next();
+    });
+};
+
+const verifyRole = (roles) => {
+    return async (req, res, next) => {
+        if (req.user && (req.user.role === 'admin' || req.user.phone === 'admin' || roles.includes(req.user.role))) {
+            next();
+        } else if (req.user) {
+            try {
+                const result = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+                if (result.rows.length > 0 && (result.rows[0].role === 'admin' || roles.includes(result.rows[0].role))) {
+                    next();
+                } else {
+                    res.status(403).json({ error: 'Access denied' });
+                }
+            } catch (e) {
+                res.status(403).json({ error: 'Access denied' });
+            }
+        } else {
+            res.status(403).json({ error: 'Access denied' });
+        }
+    }
+};
+
+const verifyAdmin = verifyRole([]); // Admin is always allowed by verifyRole
+
 // --- API ENDPOINTS ---
 
-// Register
-app.post('/api/register', async (req, res) => {
-    const { name, phone, password } = req.body;
+// Register (Now restricted to Admin and Teachers)
+app.post('/api/register', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    const { name, phone, password, role } = req.body;
     if (!name || !phone || !password) {
         return res.status(400).json({ error: 'Please provide all required fields' });
     }
 
+    // A teacher can only create 'user' (student). Admin can create 'teacher' or 'user'.
+    let newRole = 'user';
+    if (role === 'teacher' && (req.user.role === 'admin' || req.user.phone === 'admin')) {
+        newRole = 'teacher';
+    }
+
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await db.query('INSERT INTO users (name, phone, password) VALUES (?, ?, ?)', [name, phone, hashedPassword]);
+        const result = await db.query('INSERT INTO users (name, phone, password, plain_password, role) VALUES (?, ?, ?, ?, ?)', [name, phone, hashedPassword, password, newRole]);
         res.status(201).json({ message: 'User registered successfully', userId: result.lastID });
     } catch (err) {
         if (err.message && (err.message.includes('UNIQUE constraint failed') || err.message.includes('duplicate key value'))) {
@@ -125,38 +168,7 @@ app.post('/api/reset-password', async (req, res) => {
     }
 });
 
-// Middleware to verify token
-const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (!token) return res.status(403).json({ error: 'No token provided' });
-
-    const bearerToken = token.split(' ')[1] || token;
-
-    jwt.verify(bearerToken, SECRET_KEY, (err, decoded) => {
-        if (err) return res.status(401).json({ error: 'Unauthorized' });
-        req.user = decoded;
-        next();
-    });
-};
-
-const verifyAdmin = async (req, res, next) => {
-    if (req.user && (req.user.role === 'admin' || req.user.phone === 'admin')) {
-        next();
-    } else if (req.user) {
-        try {
-            const result = await db.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
-            if (result.rows.length > 0 && result.rows[0].role === 'admin') {
-                next();
-            } else {
-                res.status(403).json({ error: 'Access denied: Requires admin role' });
-            }
-        } catch (e) {
-            res.status(403).json({ error: 'Access denied: Requires admin role' });
-        }
-    } else {
-        res.status(403).json({ error: 'Access denied: Requires admin role' });
-    }
-};
+// ... (verifyToken and verifyAdmin moved above) ...
 
 // Profile - Get User Data & Scores
 app.get('/api/profile', verifyToken, async (req, res) => {
@@ -192,6 +204,7 @@ app.post('/api/score', verifyToken, async (req, res) => {
 
     try {
         const answersStr = user_answers ? JSON.stringify(user_answers) : null;
+
         await db.query(
             'INSERT INTO scores (user_id, section, correct, total, start_time, end_time, user_answers) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [req.user.id, section, correct, total, start_time, end_time, answersStr]
@@ -284,6 +297,7 @@ app.delete('/api/admin/users/:id', verifyToken, verifyAdmin, async (req, res) =>
     const userId = req.params.id;
     try {
         await db.query('DELETE FROM scores WHERE user_id = ?', [userId]);
+        await db.query('DELETE FROM class_students WHERE student_id = ?', [userId]);
         await db.query('DELETE FROM users WHERE id = ?', [userId]);
         res.json({ message: 'User and their scores deleted successfully' });
     } catch (err) {
@@ -368,6 +382,226 @@ app.delete('/api/admin/tests/:type/:id', verifyToken, verifyAdmin, async (req, r
         res.json({ message: 'Test deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: `Database error deleting ${type} test` });
+    }
+});
+
+// ==========================================
+// CLASSROOM & TEACHER API (NEW)
+// ==========================================
+
+// Teacher - Get own classes
+app.get('/api/teacher/classes', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM classes WHERE teacher_id = ? ORDER BY id DESC', [req.user.id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Database error fetching classes' });
+    }
+});
+
+// Teacher - Get all students from all classes
+app.get('/api/teacher/all-students', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    try {
+        const q = `
+            SELECT u.id, u.name, u.phone as login, u.plain_password as password, c.name as class_name, c.id as class_id
+            FROM users u
+            JOIN class_students cs ON u.id = cs.student_id
+            JOIN classes c ON cs.class_id = c.id
+            WHERE c.teacher_id = ?
+            ORDER BY c.name, u.name
+        `;
+        const result = await db.query(q, [req.user.id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Database error fetching all students' });
+    }
+});
+
+// Teacher - Create a class
+app.post('/api/teacher/classes', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Class name required' });
+    try {
+        const result = await db.query('INSERT INTO classes (name, teacher_id) VALUES (?, ?)', [name, req.user.id]);
+        res.status(201).json({ message: 'Class created', id: result.lastID });
+    } catch (err) {
+        res.status(500).json({ error: 'Database error creating class' });
+    }
+});
+
+// Teacher - Delete a class
+app.delete('/api/teacher/classes/:id', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    const classId = req.params.id;
+    try {
+        // Only allow if teacher owns the class
+        const check = await db.query('SELECT teacher_id FROM classes WHERE id = ?', [classId]);
+        if (check.rows.length === 0 || check.rows[0].teacher_id !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized or class not found' });
+        }
+        await db.query('DELETE FROM assignments WHERE class_id = ?', [classId]);
+        await db.query('DELETE FROM class_students WHERE class_id = ?', [classId]);
+        await db.query('DELETE FROM classes WHERE id = ?', [classId]);
+        res.json({ message: 'Class deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error deleting class' });
+    }
+});
+
+// Teacher - Add student to class
+app.post('/api/teacher/classes/:classId/students', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    const { classId } = req.params;
+    const { userPhone } = req.body;
+
+    try {
+        // Teacher owns the class?
+        const check = await db.query('SELECT teacher_id FROM classes WHERE id = ?', [classId]);
+        if (check.rows.length === 0 || check.rows[0].teacher_id !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        // Find user by phone
+        const userRes = await db.query('SELECT id FROM users WHERE phone = ? AND role = ?', [userPhone, 'user']);
+        if (userRes.rows.length === 0) return res.status(404).json({ error: 'Student not found with this phone' });
+
+        try {
+            await db.query('INSERT INTO class_students (class_id, student_id) VALUES (?, ?)', [classId, userRes.rows[0].id]);
+            res.json({ message: 'Student added to class' });
+        } catch (e) {
+            res.status(400).json({ error: 'Student may already be in this class' });
+        }
+
+    } catch (err) {
+        res.status(500).json({ error: 'Database error adding student' });
+    }
+});
+
+// Teacher - Get Students in a specific class
+app.get('/api/teacher/classes/:classId/students', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    const { classId } = req.params;
+    try {
+        const check = await db.query('SELECT teacher_id FROM classes WHERE id = ?', [classId]);
+        if (check.rows.length === 0 || check.rows[0].teacher_id !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        const sql = `
+            SELECT u.id, u.name, u.phone 
+            FROM users u
+            JOIN class_students cs ON u.id = cs.student_id
+            WHERE cs.class_id = ?
+        `;
+        const result = await db.query(sql, [classId]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: 'Database error fetching students' });
+    }
+});
+
+// Teacher - Assign a test to a class
+app.post('/api/teacher/assignments', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    const { classId, testType, testId } = req.body;
+    try {
+        const check = await db.query('SELECT teacher_id FROM classes WHERE id = ?', [classId]);
+        if (check.rows.length === 0 || check.rows[0].teacher_id !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+        await db.query('INSERT INTO assignments (class_id, test_type, test_id) VALUES (?, ?, ?)', [classId, testType, testId]);
+        res.status(201).json({ message: 'Test assigned to class' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to assign test' });
+    }
+});
+
+// Teacher - Get assignments for own classes
+app.get('/api/teacher/assignments', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    try {
+        const sql = `
+            SELECT a.id, a.test_type, a.test_id, a.assigned_at, c.name as class_name,
+                   COALESCE(rt.title, lt.title, wt.title) as test_title
+            FROM assignments a
+            JOIN classes c ON a.class_id = c.id
+            LEFT JOIN reading_tests rt ON a.test_type = 'reading' AND a.test_id = rt.id
+            LEFT JOIN listening_tests lt ON a.test_type = 'listening' AND a.test_id = lt.id
+            LEFT JOIN writing_tests wt ON a.test_type = 'writing' AND a.test_id = wt.id
+            WHERE c.teacher_id = ?
+            ORDER BY a.id DESC
+        `;
+        const result = await db.query(sql, [req.user.id]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error fetching assignments' });
+    }
+});
+
+// Teacher - Delete Assignment
+app.delete('/api/teacher/assignments/:id', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    try {
+        // Ensure teacher owns the class for this assignment
+        const check = await db.query(`
+            SELECT c.teacher_id FROM assignments a 
+            JOIN classes c ON a.class_id = c.id
+            WHERE a.id = ?
+        `, [req.params.id]);
+
+        if (check.rows.length === 0 || check.rows[0].teacher_id !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        await db.query('DELETE FROM assignments WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Assignment deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Database error deleting assignment' });
+    }
+});
+
+// Teacher - specific student results from teacher's classes (Proctor Results)
+app.get('/api/teacher/results', verifyToken, verifyRole(['teacher']), async (req, res) => {
+    try {
+        // Get all scores from students that belong to this teacher's classes
+        const sql = `
+            SELECT s.id, s.section, s.correct, s.total, s.date,
+                   u.name as student_name, u.phone as student_phone, c.name as class_name
+            FROM scores s
+            JOIN users u ON s.user_id = u.id
+            JOIN class_students cs ON u.id = cs.student_id
+            JOIN classes c ON cs.class_id = c.id
+            WHERE c.teacher_id = ?
+            ORDER BY s.id DESC
+        `;
+        const result = await db.query(sql, [req.user.id]);
+
+        // Remove duplicates based on score ID (if a student is in multiple classes of the same teacher)
+        const uniqueScores = {};
+        result.rows.forEach(r => { uniqueScores[r.id] = r; });
+
+        res.json(Object.values(uniqueScores));
+    } catch (err) {
+        res.status(500).json({ error: 'Database error fetching results' });
+    }
+});
+
+// Student - Get My Assignments
+app.get('/api/user/assignments', verifyToken, async (req, res) => {
+    try {
+        const sql = `
+            SELECT a.id, a.test_type, a.test_id, a.assigned_at, c.name as class_name,
+                   COALESCE(rt.title, lt.title, wt.title) as test_title
+            FROM assignments a
+            JOIN classes c ON a.class_id = c.id
+            JOIN class_students cs ON c.id = cs.class_id
+            LEFT JOIN reading_tests rt ON a.test_type = 'reading' AND a.test_id = rt.id
+            LEFT JOIN listening_tests lt ON a.test_type = 'listening' AND a.test_id = lt.id
+            LEFT JOIN writing_tests wt ON a.test_type = 'writing' AND a.test_id = wt.id
+            WHERE cs.student_id = ?
+            ORDER BY a.id DESC
+        `;
+        const result = await db.query(sql, [req.user.id]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error fetching derived assignments' });
     }
 });
 

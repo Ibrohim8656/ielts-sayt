@@ -343,6 +343,7 @@
         <div class="admin-tabs">
             <button class="admin-tab active" onclick="switchTab('students')">O'quvchilar</button>
             <button class="admin-tab" onclick="switchTab('tests')">Testlar</button>
+            <button class="admin-tab" onclick="switchTab('create-user')">Foydalanuvchi Qo'shish</button>
         </div>
 
         <div id="students-tab" class="tab-content active">
@@ -364,6 +365,35 @@
                 <div class="no-records">Testlar yuklanmoqda...</div>
             </div>
         </div>
+        <div id="create-user-tab" class="tab-content"
+            style="max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <h3 style="color: var(--text-color); margin-bottom: 20px;">Yangi Foydalanuvchi Ro'yxatdan O'tkazish</h3>
+            <form id="admin-create-user-form">
+                <div class="cms-form-group">
+                    <label>Ism Familiya</label>
+                    <input type="text" id="add-user-name" required placeholder="To'liq ism">
+                </div>
+                <div class="cms-form-group">
+                    <label>Telefon Raqam</label>
+                    <input type="text" id="add-user-phone" required placeholder="+998901234567">
+                </div>
+                <div class="cms-form-group">
+                    <label>Parol</label>
+                    <input type="text" id="add-user-pass" required value="123456">
+                    <small style="color: var(--text-muted);">Standart parol 123456</small>
+                </div>
+                <div class="cms-form-group">
+                    <label>Rol</label>
+                    <select id="add-user-role" required>
+                        <option value="user">O'quvchi</option>
+                        <option value="teacher">O'qituvchi</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div id="add-user-res" style="margin-bottom: 15px; font-size: 14px; font-weight: 600;"></div>
+                <button type="submit" class="cms-save-btn">Foydalanuvchini Qo'shish</button>
+            </form>
+        </div>
     </main>
 
     <!-- CMS Modal -->
@@ -383,20 +413,27 @@
                     </select>
                 </div>
                 <div class="cms-form-group">
-                    <label>Reading Topic:</label>
-                    <textarea id="cms-passage" placeholder="Matnni shu yerga joylang..."></textarea>
+                    <label>Reading / Listening Passage o'rni (Text):</label>
+                    <textarea id="cms-passage" placeholder="Matnni shu yerga joylang... (Agar bo'lsa)"></textarea>
                 </div>
+
                 <div class="cms-form-group">
-                    <label>Questions:</label>
-                    <textarea id="cms-questions" required placeholder="Savollarni shu yerga joylang..."></textarea>
+                    <label>Savollar:</label>
+                    <div id="questions-container"
+                        style="background:var(--bg-body); padding:15px; border-radius:8px; border:1px solid var(--border-color); min-height: 100px; max-height: 400px; overflow-y: auto;">
+                        <!-- Dynamic questions go here -->
+                    </div>
+                    <button type="button" class="action-btn" onclick="addQuestionBlock()"
+                        style="margin-top:10px; width:100%;">+ Yangi Savol Qo'shish</button>
                 </div>
-                <div class="cms-form-group">
-                    <label>Solutions:</label>
-                    <textarea id="cms-answers" required placeholder="1. javob&#10;2. javob..."></textarea>
-                    <small style="color: var(--text-muted); margin-top: 5px; display: block;">Javoblarni pastga qarab
-                        raqamlab yozing (Masalan: 1. TRUE \n 2. FALSE)</small>
+
+                <!-- Hidden inputs for backward compatibility with the existing save logic -->
+                <textarea id="cms-questions" style="display:none;"></textarea>
+                <textarea id="cms-answers" style="display:none;"></textarea>
+
+                <div style="margin-top:20px;">
+                    <button type="submit" class="cms-save-btn">Saqlash</button>
                 </div>
-                <button type="submit" class="cms-save-btn">Saqlash</button>
             </form>
         </div>
     </div>
@@ -598,11 +635,23 @@
                 let optMatch;
                 while ((optMatch = optRegex.exec(optionsHtml)) !== null) {
                     if (optMatch[1].trim() !== '') {
-                        options.push(optMatch[1]);
+                        options.push(optMatch[1].trim());
                     }
                 }
                 return `[${qNum}|${options.join(',')}]`;
             });
+
+            // Replace Inputs with {N}
+            text = text.replace(/<b>\s*(\d+)\s*<\/b>\s*<input[^>]*>/gi, (match, qNum) => {
+                return `{${qNum}}`;
+            });
+
+            // Replace paragraphs with newlines
+            text = text.replace(/<p>/gi, '').replace(/<\/p>/gi, '\n\n');
+            text = text.replace(/<br>/gi, '\n');
+
+            // Clean up left over HTML entities
+            text = text.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 
             // Replace Selects without bold tags
             text = text.replace(/<select[^>]*id="q(\d+)"[^>]*>([\s\S]*?)<\/select>/gi, (match, qNum, optionsHtml) => {
@@ -639,9 +688,47 @@
             text = text.replace(/&gt;/g, '>');
             text = text.replace(/&amp;/g, '&');
 
-            text = text.replace(/\n{3,}/g, '\n\n');
             return text.trim();
         };
+
+        // Admin Create User Form Logic
+        document.getElementById('admin-create-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const resDiv = document.getElementById('add-user-res');
+            btn.disabled = true;
+            resDiv.textContent = "Kutilmoqda...";
+
+            try {
+                const token = localStorage.getItem('token');
+                const name = document.getElementById('add-user-name').value;
+                const phone = document.getElementById('add-user-phone').value;
+                const password = document.getElementById('add-user-pass').value;
+                const role = document.getElementById('add-user-role').value;
+
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, phone, password, role })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    resDiv.style.color = "var(--success-color)";
+                    resDiv.textContent = "Muvaffaqiyatli qo'shildi!";
+                    document.getElementById('add-user-name').value = '';
+                    document.getElementById('add-user-phone').value = '';
+                    document.getElementById('add-user-pass').value = '123456';
+                } else {
+                    resDiv.style.color = "var(--error-color)";
+                    resDiv.textContent = data.error;
+                }
+            } catch (err) {
+                resDiv.style.color = "var(--error-color)";
+                resDiv.textContent = "Server xatosi";
+            }
+            btn.disabled = false;
+        });
 
         window.formatAnswersToText = function (answers) {
             if (!answers) return '';
@@ -667,25 +754,149 @@
             return text.trim();
         };
 
+        let questionCount = 0;
+
+        window.addQuestionBlock = function (data = null) {
+            questionCount++;
+            const container = document.getElementById('questions-container');
+
+            const block = document.createElement('div');
+            block.className = 'q-block';
+            block.id = `q-block-${questionCount}`;
+            block.style.cssText = "background:var(--surface-color); padding:15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; position:relative;";
+
+            let qNum = data ? data.num : questionCount;
+            let qText = data ? data.text : "";
+            let qType = data ? data.type : "input"; // "input" or "select"
+
+            let blockHtml = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <strong style="color:var(--primary-color);">Savol ${qNum}</strong>
+                    <button type="button" onclick="removeQuestionBlock(${questionCount})" style="background:none; border:none; color:var(--error-color); cursor:pointer; font-size:1.2rem;">&times;</button>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="number" class="q-num-input" style="width:60px; padding:8px; border:1px solid var(--border-color); border-radius:6px;" value="${qNum}" placeholder="No" title="Savol raqami">
+                    <input type="text" class="q-text-input" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:6px;" value="${qText}" placeholder="Savol matnini kiriting (ixtiyoriy)">
+                    <select class="q-type-select" style="padding:8px; border:1px solid var(--border-color); border-radius:6px;" onchange="handleQuestionTypeChange(${questionCount})">
+                        <option value="input" ${qType === 'input' ? 'selected' : ''}>Yozma javob</option>
+                        <option value="select" ${qType === 'select' ? 'selected' : ''}>Variantli (A,B,C)</option>
+                    </select>
+                </div>
+                
+                <!-- Options Container (Only for Select Type) -->
+                <div id="q-options-${questionCount}" style="display:${qType === 'select' ? 'block' : 'none'}; padding-left:70px;">
+                    <div class="options-list"></div>
+                    <button type="button" onclick="addOptionToBlock(${questionCount})" style="background:none; border:1px dashed var(--border-color); color:var(--text-muted); padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.85rem; margin-top:5px;">+ Variant qo'shish</button>
+                    <div style="margin-top:10px;">
+                        <input type="text" class="q-correct-select" placeholder="To'g'ri javobni yozing (masalan: TRUE yoki A)" style="padding:8px; border:1px solid var(--success-color); border-radius:6px; width:100%;">
+                    </div>
+                </div>
+
+                <!-- Answer Input (Only for Input Type) -->
+                <div id="q-answer-${questionCount}" style="display:${qType === 'input' ? 'block' : 'none'}; padding-left:70px;">
+                    <input type="text" class="q-correct-input" placeholder="To'g'ri javobni yozing (Masalan: Apple)" style="padding:8px; border:1px solid var(--success-color); border-radius:6px; width:100%;" value="${data && qType === 'input' ? data.answer : ''}">
+                </div>
+            `;
+
+            block.innerHTML = blockHtml;
+            container.appendChild(block);
+
+            // Populate options if editing data exists
+            if (data && data.type === 'select' && data.options) {
+                data.options.forEach(opt => addOptionToBlock(questionCount, opt));
+                block.querySelector('.q-correct-select').value = data.answer || '';
+            }
+        };
+
+        window.removeQuestionBlock = function (id) {
+            const block = document.getElementById(`q-block-${id}`);
+            if (block) block.remove();
+        };
+
+        window.handleQuestionTypeChange = function (id) {
+            const block = document.getElementById(`q-block-${id}`);
+            const type = block.querySelector('.q-type-select').value;
+            block.querySelector(`#q-options-${id}`).style.display = type === 'select' ? 'block' : 'none';
+            block.querySelector(`#q-answer-${id}`).style.display = type === 'input' ? 'block' : 'none';
+        };
+
+        window.addOptionToBlock = function (id, val = '') {
+            const list = document.querySelector(`#q-options-${id} .options-list`);
+            const optDiv = document.createElement('div');
+            optDiv.style.display = 'flex';
+            optDiv.style.gap = '5px';
+            optDiv.style.marginBottom = '5px';
+            optDiv.innerHTML = `
+                <input type="text" value="${val}" placeholder="Variant (A)" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:4px;">
+                <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:var(--error-color); cursor:pointer;">&times;</button>
+            `;
+            list.appendChild(optDiv);
+        };
+
+        // Parse existing HTML back into block data for editing
+        window.parseExistingTestToBlocks = function (questionsHtml, answersJson) {
+            document.getElementById('questions-container').innerHTML = '';
+            questionCount = 0;
+            if (!questionsHtml) {
+                addQuestionBlock(); // Empty initial block
+                return;
+            }
+
+            let answers = typeof answersJson === 'string' ? JSON.parse(answersJson || '{}') : (answersJson || {});
+
+            // Dummy container to parse HTML
+            const dummy = document.createElement('div');
+            dummy.innerHTML = questionsHtml;
+
+            // Simple parser: find <b> elements (they hold question numbers)
+            const bTags = dummy.querySelectorAll('b');
+            if (bTags.length === 0) {
+                addQuestionBlock(); return;
+            }
+
+            bTags.forEach(b => {
+                let num = b.textContent.trim().replace(/\D/g, '');
+                if (!num) return;
+                let ansObj = answers[`q${num}`];
+                let answerStr = ansObj ? (typeof ansObj === 'object' ? ansObj.answer : ansObj) : '';
+
+                // Check what follows the <b> tag
+                let nextEl = b.nextElementSibling;
+                if (nextEl && nextEl.tagName === 'SELECT') {
+                    // It's a multiple choice
+                    let options = [];
+                    nextEl.querySelectorAll('option').forEach(opt => {
+                        if (opt.value) options.push(opt.value);
+                    });
+
+                    addQuestionBlock({ num: num, text: '', type: 'select', options: options, answer: answerStr });
+                } else if (nextEl && nextEl.tagName === 'INPUT') {
+                    addQuestionBlock({ num: num, text: '', type: 'input', answer: answerStr });
+                } else {
+                    addQuestionBlock({ num: num, text: '', type: 'input', answer: answerStr });
+                }
+            });
+        };
+
         window.openTestModal = function (test = null) {
             const modal = document.getElementById('cms-modal');
             const form = document.getElementById('cms-form');
             form.reset();
+            document.getElementById('questions-container').innerHTML = '';
 
             if (test) {
                 document.getElementById('modal-title').textContent = "Testni tahrirlash";
                 document.getElementById('cms-id').value = test.id;
                 document.getElementById('cms-type').value = document.getElementById('test-type-filter').value;
                 document.getElementById('cms-passage').value = parseHTMLToText(test.passage);
-                document.getElementById('cms-questions').value = parseHTMLToText(test.questions);
-                document.getElementById('cms-answers').value = formatAnswersToText(test.answers);
+
+                parseExistingTestToBlocks(test.questions, test.answers);
             } else {
                 document.getElementById('modal-title').textContent = "Yangi test qo'shish";
                 document.getElementById('cms-id').value = '';
                 document.getElementById('cms-type').value = document.getElementById('test-type-filter').value;
                 document.getElementById('cms-passage').value = '';
-                document.getElementById('cms-questions').value = '';
-                document.getElementById('cms-answers').value = '';
+                addQuestionBlock({ num: '1', text: '', type: 'input', answer: '' });
             }
 
             modal.classList.add('active');
@@ -735,33 +946,66 @@
             const token = localStorage.getItem('token');
             const btn = document.querySelector('.cms-save-btn');
 
-            const rawAnswers = document.getElementById('cms-answers').value;
+            let generatedHtml = "";
             let answersJson = {};
+            let hasErrors = false;
 
-            const trimmed = rawAnswers.trim();
-            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                try {
-                    answersJson = JSON.parse(trimmed);
-                } catch (err) {
-                    alert("JSON formatida xatolik bor!");
-                    return;
-                }
-            } else {
-                const lines = trimmed.split('\n');
-                lines.forEach(line => {
-                    const l = line.trim();
-                    if (!l) return;
-                    const match = l.match(/^q?(\d+)[\.\:\)]?\s*(.+)$/i);
-                    if (match) {
-                        answersJson[`q${match[1]}`] = { answer: match[2].trim() };
-                    }
-                });
-
-                if (Object.keys(answersJson).length === 0) {
-                    alert("Javoblar topilmadi. Javoblarni '1. TRUE' kabi formatda kiriting.");
-                    return;
-                }
+            const blocks = document.querySelectorAll('.q-block');
+            if (blocks.length === 0) {
+                alert("Kamida bitta savol qo'shing!");
+                return;
             }
+
+            blocks.forEach(block => {
+                const qNumStr = block.querySelector('.q-num-input').value;
+                const qNum = parseInt(qNumStr);
+                const qText = block.querySelector('.q-text-input').value.trim();
+                const qType = block.querySelector('.q-type-select').value;
+
+                if (!qNumStr) {
+                    alert(`Iltimos barcha savollar uchun raqam (No) kiriting! (Blok ID: ${block.id})`);
+                    hasErrors = true;
+                    return;
+                }
+
+                if (qText) {
+                    generatedHtml += `<p>${qText}</p>\n`;
+                }
+
+                if (qType === 'input') {
+                    generatedHtml += `<b>${qNum} </b><input type="text" required="" id="q${qNum}" onkeyup="gtb(this)">\n<br><br>\n`;
+                    let correctAns = block.querySelector('.q-correct-input').value.trim();
+                    if (!correctAns) {
+                        alert(`${qNum}-savol uchun to'g'ri javobni kiritish esdan chiqdi.`);
+                        hasErrors = true;
+                    }
+                    answersJson[`q${qNum}`] = { answer: correctAns };
+                } else if (qType === 'select') {
+                    let optsInner = `<option value=""> </option>`;
+                    let optionsInputs = block.querySelectorAll(`#q-options-${block.id.split('-')[2]} .options-list input[type="text"]`);
+
+                    if (optionsInputs.length === 0) {
+                        alert(`${qNum}-savol (Variantli) kamida bitta variantga ega bo'lishi kerak.`);
+                        hasErrors = true;
+                    }
+
+                    optionsInputs.forEach(opt => {
+                        let val = opt.value.trim();
+                        if (val) optsInner += `<option value="${val}">${val}</option>`;
+                    });
+
+                    generatedHtml += `<b>${qNum} </b><select id="q${qNum}" onchange="gdd(this)">${optsInner}</select>\n<br><br>\n`;
+
+                    let correctAns = block.querySelector('.q-correct-select').value.trim();
+                    if (!correctAns) {
+                        alert(`${qNum}-savol (Variantli) uchun to'g'ri javobni kiritish esdan chiqdi.`);
+                        hasErrors = true;
+                    }
+                    answersJson[`q${qNum}`] = { answer: correctAns };
+                }
+            });
+
+            if (hasErrors) return;
 
             let generatedTitle = "Nomsiz Test";
             const typeFilter = document.getElementById('cms-type').value;
@@ -774,7 +1018,7 @@
             const payload = {
                 title: generatedTitle,
                 passage: parseTextToHTML(document.getElementById('cms-passage').value),
-                questions: parseTextToHTML(document.getElementById('cms-questions').value),
+                questions: generatedHtml,
                 answers: JSON.stringify(answersJson)
             };
 

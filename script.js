@@ -295,6 +295,7 @@ function finishTest(isReviewMode = false) {
             section = `Reading: ${title}`;
         }
 
+        // Proctor score handling
         fetch('/api/score', {
             method: 'POST',
             headers: {
@@ -430,6 +431,11 @@ function updateHeader() {
         if (userRole === 'admin') {
             nav.innerHTML = `
                 <a href="admin.html" class="nav-btn">👨‍🏫 Admin Panel</a>
+                <button onclick="logout()" class="nav-btn logout">Chiqish</button>
+            `;
+        } else if (userRole === 'teacher') {
+            nav.innerHTML = `
+                <a href="teacher.html" class="nav-btn">👨‍🏫 O'qituvchi Paneli</a>
                 <button onclick="logout()" class="nav-btn logout">Chiqish</button>
             `;
         } else {
@@ -570,6 +576,8 @@ if (loginForm) {
 
                 if (data.role === 'admin') {
                     window.location.href = 'admin.html';
+                } else if (data.role === 'teacher') {
+                    window.location.href = 'teacher.html';
                 } else {
                     window.location.href = 'profile.html';
                 }

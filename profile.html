@@ -30,6 +30,14 @@
             </div>
         </div>
 
+        <div class="assignments-section" style="margin-top: 30px;">
+            <h3>Mening Vazifalarim</h3>
+            <div class="card-grid" id="student-assignments-list"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <p class="loading-msg">Vazifalar tekshirilmoqda...</p>
+            </div>
+        </div>
+
         <div class="scores-section" style="margin-top: 30px;">
             <h3>Natijalar O'sish Dinamikasi</h3>
             <div
@@ -54,8 +62,45 @@
                 window.location.href = 'login.html';
             } else {
                 fetchProfileData().then(() => renderChart());
+                loadStudentAssignments();
             }
         });
+
+        // Load Student Assignments
+        async function loadStudentAssignments() {
+            const list = document.getElementById('student-assignments-list');
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/user/assignments', { headers: { 'Authorization': 'Bearer ' + token } });
+                const assignments = await res.json();
+
+                if (assignments.length === 0) {
+                    list.innerHTML = `<p style="grid-column:1/-1; color:var(--text-muted);">Hozircha sizga vazifa berilmagan.</p>`;
+                    return;
+                }
+
+                list.innerHTML = assignments.map(a => {
+                    let btnText = "Boshlash";
+                    let link = `${a.test_type}.html?id=${a.test_id}&assignment=${a.id}`;
+
+                    return `
+                    <div style="background:var(--surface-color); border:1px solid var(--border-color); border-radius:10px; padding:20px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                        <div style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; text-transform:uppercase; margin-bottom:5px;">
+                            ${a.test_type} | ${a.class_name}
+                        </div>
+                        <div style="font-size:1.1rem; font-weight:bold; margin-bottom:10px; color:var(--text-main);">
+                            ${a.test_title || 'Nomsiz Test'}
+                        </div>
+                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:15px;">
+                            Berildi: ${new Date(a.assigned_at).toLocaleDateString('uz-UZ')}
+                        </div>
+                        <a href="${link}" style="display:block; text-align:center; background:var(--primary-color); color:white; padding:10px; border-radius:8px; text-decoration:none; font-weight:bold;">${btnText}</a>
+                    </div>
+                `}).join('');
+            } catch (e) {
+                list.innerHTML = `<p style="color:var(--error-color);">Xatolik yuz berdi</p>`;
+            }
+        }
 
         // Global function to be called after fetchProfileData populated window.userScores
         async function renderChart() {

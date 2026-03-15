@@ -62,6 +62,18 @@
     <!-- Mantiqiy ishlov (JavaScript) -->
     <script src="test_data.js"></script>
     <script src="script.js?v=2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const assignmentId = params.get('assignment');
+            if (assignmentId && typeof initProctor === 'function') {
+                // Delay slightly to let page render
+                setTimeout(() => {
+                    initProctor(assignmentId);
+                }, 1000);
+            }
+        });
+    </script>
 </body>
 
 </html>

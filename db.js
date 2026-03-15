@@ -109,6 +109,7 @@ const initSchema = async () => {
             name VARCHAR(255) NOT NULL,
             phone VARCHAR(20) UNIQUE NOT NULL,
             password TEXT NOT NULL,
+            plain_password VARCHAR(255) DEFAULT '123456',
             role VARCHAR(50) DEFAULT 'user'
         )`);
 
@@ -117,6 +118,9 @@ const initSchema = async () => {
             sqliteDb.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`, (err) => {
                 // Ignore error if column already exists
             });
+            sqliteDb.run(`ALTER TABLE users ADD COLUMN plain_password TEXT DEFAULT '123456'`, (err) => { });
+        } else {
+            try { await query(`ALTER TABLE users ADD COLUMN plain_password VARCHAR(255) DEFAULT '123456'`); } catch (e) { }
         }
 
         // Scores Table
@@ -138,12 +142,14 @@ const initSchema = async () => {
             sqliteDb.run(`ALTER TABLE scores ADD COLUMN start_time TEXT`, (e) => { });
             sqliteDb.run(`ALTER TABLE scores ADD COLUMN end_time TEXT`, (e) => { });
             sqliteDb.run(`ALTER TABLE scores ADD COLUMN user_answers TEXT`, (e) => { });
+            sqliteDb.run(`ALTER TABLE scores ADD COLUMN trust_score INTEGER DEFAULT 100`, (e) => { });
         } else {
             // Postgres ignores duplicate column errors if using catch
             const addCols = [
                 'ALTER TABLE scores ADD COLUMN start_time TIMESTAMP',
                 'ALTER TABLE scores ADD COLUMN end_time TIMESTAMP',
-                'ALTER TABLE scores ADD COLUMN user_answers JSONB'
+                'ALTER TABLE scores ADD COLUMN user_answers JSONB',
+                'ALTER TABLE scores ADD COLUMN trust_score INTEGER DEFAULT 100'
             ];
             for (let c of addCols) {
                 try { await query(c); } catch (e) { /* ignore already exists */ }
@@ -176,6 +182,34 @@ const initSchema = async () => {
             title VARCHAR UNIQUE,
             content TEXT,
             min_words INTEGER DEFAULT 250
+        )`);
+
+        // Classes Table (Classroom)
+        await query(`CREATE TABLE IF NOT EXISTS classes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) NOT NULL,
+            teacher_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(teacher_id) REFERENCES users(id)
+        )`);
+
+        // Class Students Table (Classroom)
+        await query(`CREATE TABLE IF NOT EXISTS class_students (
+            class_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            PRIMARY KEY (class_id, student_id),
+            FOREIGN KEY(class_id) REFERENCES classes(id),
+            FOREIGN KEY(student_id) REFERENCES users(id)
+        )`);
+
+        // Assignments Table (Classroom)
+        await query(`CREATE TABLE IF NOT EXISTS assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            test_type VARCHAR(50) NOT NULL, -- 'reading', 'listening', 'writing', 'speaking'
+            test_id INTEGER NOT NULL,
+            assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(class_id) REFERENCES classes(id)
         )`);
 
         // Seed Admin User

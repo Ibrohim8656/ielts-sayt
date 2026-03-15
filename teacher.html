@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS PRACTICE ZEMSTARK - Teacher Dashboard</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .teacher-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+
+        .sidebar {
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            align-self: start;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .dashboard-content {
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            min-height: 500px;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .action-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Grid for cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .class-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .class-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .class-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        /* Modal specific */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .save-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .teacher-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script>
+        // Redirect if not teacher or admin
+        const r = localStorage.getItem('userRole');
+        const p = localStorage.getItem('userPhone');
+        if (!r || (r !== 'teacher' && r !== 'admin' && p !== 'admin')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+</head>
+
+<body class="profile-body">
+    <header class="app-header">
+        <div class="brand">
+            <h1><a href="index.html">IELTS PRACTICE <span class="brand-sub">ZEMSTARK</span></a></h1>
+        </div>
+        <nav class="auth-nav" id="top-nav"></nav>
+    </header>
+
+    <main class="teacher-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" class="active" onclick="switchView('all-students', this)">📋 Mening O'quvchilarim</a>
+                </li>
+                <li><a href="#" onclick="switchView('classes', this)">📂 Mening Guruhlarim</a></li>
+                <li><a href="#" onclick="switchView('students', this)">👨‍🎓 O'quvchi Qo'shish</a></li>
+                <li><a href="#" onclick="switchView('results', this)">📊 Natijalar (Proctor)</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-content">
+
+            <!-- ALL STUDENTS SECTION -->
+            <div id="all-students-sec" class="content-section active">
+                <div class="section-header">
+                    <h2>Mening O'quvchilarim</h2>
+                </div>
+                <div
+                    style="background: var(--surface-color); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead style="background: var(--bg-body); border-bottom: 2px solid var(--border-color);">
+                            <tr>
+                                <th style="padding: 15px;">Ism va familiya</th>
+                                <th style="padding: 15px;">Telefon (Login)</th>
+                                <th style="padding: 15px;">Parol</th>
+                                <th style="padding: 15px;">Guruh</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-students-list">
+                            <tr>
+                                <td colspan="4" style="padding: 15px; text-align: center;">Yuklanmoqda...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CLASSES SECTION -->
+            <div id="classes-sec" class="content-section">
+                <div class="section-header">
+                    <h2>Mening Guruhlarim</h2>
+                    <button class="action-btn" onclick="openModal('class-modal')">+ Yangi Guruh</button>
+                </div>
+                <div class="card-grid" id="classes-list">
+                    <p class="loading-msg">Yuklanmoqda...</p>
+                </div>
+            </div>
+
+            <!-- ADD STUDENT SECTION -->
+            <div id="students-sec" class="content-section">
+                <div class="section-header">
+                    <h2>O'quvchi Ro'yxatdan O'tkazish</h2>
+                </div>
+                <div style="max-width: 500px;">
+                    <form id="add-student-form">
+                        <div class="form-group">
+                            <label>Ism va familiya</label>
+                            <input type="text" id="stu-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefon raqam (Login)</label>
+                            <input type="tel" id="stu-phone" placeholder="+998901234567" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Parol</label>
+                            <input type="text" id="stu-pass" required value="123456">
+                        </div>
+                        <button type="submit" class="save-btn">Saqlash</button>
+                        <p id="stu-res" style="margin-top:10px; color:var(--success-color); font-weight:bold;"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ASSIGNMENTS SECTION -->
+            <div id="assignments-sec" class="content-section">
+                <div class="section-header">
+                    <h2>Vazifalar ro'yxati</h2>
+                </div>
+                <div class="card-grid" id="assignments-list">
+                    <p class="loading-msg">Yuklanmoqda...</p>
+                </div>
+            </div>
+
+            <!-- RESULTS & PROCTOR SECTION -->
+            <div id="results-sec" class="content-section">
+                <div class="section-header">
+                    <h2>O'quvchilar Natijalari (Imtihon nazorati bilan)</h2>
+                </div>
+                <div id="results-list">
+                    <p class="loading-msg">Tez orada qo'shiladi...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal for New Class -->
+    <div class="cms-modal" id="class-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center;">
+        <div style="background:var(--surface-color); padding:30px; border-radius:12px; width:400px; max-width:90%;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0;">Yangi Guruh</h3>
+                <button onclick="closeModal('class-modal')"
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="create-class-form">
+                <div class="form-group">
+                    <label>Guruh nomi</label>
+                    <input type="text" id="class-name" placeholder="Masalan: IELTS Group - 1" required>
+                </div>
+                <button type="submit" class="save-btn">Yaratish</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Managing Students in Class -->
+    <div class="cms-modal" id="students-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center;">
+        <div
+            style="background:var(--surface-color); padding:30px; border-radius:12px; width:600px; max-width:90%; max-height:80vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0;" id="st-modal-title">Guruh O'quvchilari</h3>
+                <button onclick="closeModal('students-modal')"
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <form id="add-student-to-class-form" style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="hidden" id="manage-class-id">
+                <input type="tel" id="manage-student-phone" placeholder="O'quvchi telefoni (+998...)" required
+                    style="flex:1; padding:10px; border:1px solid var(--border-color); border-radius:8px;">
+                <button type="submit" class="action-btn">Qo'shish</button>
+            </form>
+
+            <div id="class-students-list" style="border-top:1px solid var(--border-color); padding-top:15px;">
+                <p class="loading-msg">Yuklanmoqda...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Assigning Test -->
+    <div class="cms-modal" id="assign-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center;">
+        <div style="background:var(--surface-color); padding:30px; border-radius:12px; width:500px; max-width:90%;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0;">Vazifa Berish</h3>
+                <button onclick="closeModal('assign-modal')"
+                    style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="assign-test-form">
+                <input type="hidden" id="assign-class-id">
+
+                <div class="form-group">
+                    <label>Test Turi</label>
+                    <select id="assign-test-type" required onchange="loadTestsForAssign()">
+                        <option value="">-- Tanlang --</option>
+                        <option value="reading">Reading</option>
+                        <option value="listening">Listening</option>
+                        <option value="writing">Writing</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Qaysi Testni Berasiz?</label>
+                    <select id="assign-test-id" required>
+                        <option value="">Avval turni tanlang</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="save-btn">Vazifa Qilib Birlashtirish</button>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="script.js?v=2"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const userName = localStorage.getItem('userName');
+
+        // Navigation Setup
+        document.getElementById('top-nav').innerHTML = `
+            <span class="nav-btn" style="background:none; color:var(--text-main);">👨‍🏫 O'qituvchi: ${userName}</span>
+            <button onclick="logout()" class="nav-btn logout">Chiqish</button>
+        `;
+
+        function switchView(viewId, el) {
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(viewId + '-sec').classList.add('active');
+
+            if (viewId === 'all-students') loadAllStudents();
+            else if (viewId === 'classes') loadClasses();
+            else if (viewId === 'assignments') loadAssignments();
+            else if (viewId === 'results') loadResults();
+        }
+
+        async function loadAllStudents() {
+            const list = document.getElementById('all-students-list');
+            try {
+                const res = await fetch('/api/teacher/all-students', { headers: { 'Authorization': 'Bearer ' + token } });
+                const students = await res.json();
+
+                if (students.length === 0) {
+                    list.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center;">Hozircha hech qanday o\'quvchi yo\'q. Avval guruh yaratib, unga o\'quvchi qo\'shing.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = students.map(s => `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 15px;"><b>${s.name}</b></td>
+                        <td style="padding: 15px;">${s.login}</td>
+                        <td style="padding: 15px;"><code>${s.password || '123456'}</code></td>
+                        <td style="padding: 15px;">${s.class_name}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: red;">Xatolik yuz berdi.</td></tr>';
+            }
+        }
+
+        // Add Student Form Handler
+        document.getElementById('add-student-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const resText = document.getElementById('stu-res');
+            btn.disabled = true;
+            resText.textContent = "Kutilmoqda...";
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({
+                        name: document.getElementById('stu-name').value,
+                        phone: document.getElementById('stu-phone').value,
+                        password: document.getElementById('stu-pass').value,
+                        role: 'user'
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    resText.style.color = "var(--success-color)";
+                    resText.textContent = "O'quvchi muvaffaqiyatli qo'shildi!";
+                    e.target.reset();
+                    document.getElementById('stu-pass').value = "123456";
+                } else {
+                    resText.style.color = "var(--error-color)";
+                    resText.textContent = data.error;
+                }
+            } catch (e) {
+                resText.style.color = "var(--error-color)";
+                resText.textContent = "Server xatosi";
+            }
+            btn.disabled = false;
+        });
+
+        // Fetch and display classes
+        async function loadClasses() {
+            const list = document.getElementById('classes-list');
+            try {
+                const res = await fetch('/api/teacher/classes', { headers: { 'Authorization': 'Bearer ' + token } });
+                const classes = await res.json();
+
+                if (classes.length === 0) {
+                    list.innerHTML = `<p class="loading-msg" style="grid-column: 1/-1;">Hali hech qanday guruh yaratilmagan.</p>`;
+                    return;
+                }
+
+                list.innerHTML = classes.map(c => `
+                    <div class="class-card">
+                        <div style="display:flex; justify-content:space-between;">
+                            <div class="class-name">${c.name}</div>
+                            <button onclick="deleteClass(${c.id})" style="background:var(--error-color); color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">&times;</button>
+                        </div>
+                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:15px;">
+                            ID: ${c.id} | Yaratildi: ${new Date(c.created_at).toLocaleDateString('uz-UZ')}
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="viewStudents(${c.id}, '${c.name.replace(/'/g, "\\'")}')" class="action-btn" style="padding: 6px 12px; font-size:0.85rem; background: #3b82f6;">O'quvchilar</button>
+                            <button onclick="openAssignModalForClass(${c.id})" class="action-btn" style="padding: 6px 12px; font-size:0.85rem; background: #10b981;">Vazifa berish</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<p class="loading-msg" style="color:var(--error-color);">Xatolik yuz berdi.</p>`;
+            }
+        }
+
+        // Create new class
+        document.getElementById('create-class-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('class-name').value;
+            try {
+                const res = await fetch('/api/teacher/classes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ name })
+                });
+                if (res.ok) {
+                    closeModal('class-modal');
+                    document.getElementById('create-class-form').reset();
+                    loadClasses();
+                } else {
+                    alert("Xatolik yuz berdi");
+                }
+            } catch (err) {
+                alert("Server xatosi");
+            }
+        });
+
+        // Delete class
+        async function deleteClass(id) {
+            if (!confirm("Guruhni o'chirish barcha vazifalar va natijalarni yo'qotishi mumkin. Davom etasizmi?")) return;
+            try {
+                const res = await fetch('/api/teacher/classes/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) loadClasses();
+            } catch (e) { alert("Xatolik!"); }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Add internal student viewing logic placeholder
+        window.viewStudents = async function (classId, className) {
+            document.getElementById('st-modal-title').textContent = className + " (O'quvchilar)";
+            document.getElementById('manage-class-id').value = classId;
+            openModal('students-modal');
+            loadClassStudents(classId);
+        };
+
+        async function loadClassStudents(classId) {
+            const list = document.getElementById('class-students-list');
+            list.innerHTML = `<p class="loading-msg">Yuklanmoqda...</p>`;
+            try {
+                const res = await fetch(`/api/teacher/classes/${classId}/students`, { headers: { 'Authorization': 'Bearer ' + token } });
+                const students = await res.json();
+
+                if (students.length === 0) {
+                    list.innerHTML = `<p style="color:var(--text-muted); text-align:center;">Bu guruhda hali o'quvchilar yo'q.</p>`;
+                    return;
+                }
+
+                list.innerHTML = students.map(s => `
+                    <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dotted var(--border-color);">
+                        <div><strong>${s.name}</strong> <br> <small style="color:var(--text-muted);">${s.phone}</small></div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<p style="color:var(--error-color);">Xatolik yuz berdi</p>`;
+            }
+        }
+
+        // Add Student to Class
+        document.getElementById('add-student-to-class-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const classId = document.getElementById('manage-class-id').value;
+            const phone = document.getElementById('manage-student-phone').value;
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/teacher/classes/${classId}/students`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ userPhone: phone })
+                });
+                if (res.ok) {
+                    document.getElementById('manage-student-phone').value = '';
+                    loadClassStudents(classId);
+                } else {
+                    const data = await res.json();
+                    alert(data.error || "Qo'shishda xatolik");
+                }
+            } catch (err) {
+                alert("Server xatosi");
+            }
+            btn.disabled = false;
+        });
+
+        // Add internal assign logic placeholder
+        window.openAssignModalForClass = function (classId) {
+            document.getElementById('assign-class-id').value = classId;
+            document.getElementById('assign-test-type').value = '';
+            document.getElementById('assign-test-id').innerHTML = '<option value="">Avval turni tanlang</option>';
+            openModal('assign-modal');
+        };
+
+        window.loadTestsForAssign = async function () {
+            const type = document.getElementById('assign-test-type').value;
+            const select = document.getElementById('assign-test-id');
+            if (!type) {
+                select.innerHTML = '<option value="">Avval turni tanlang</option>';
+                return;
+            }
+            select.innerHTML = '<option value="">Yuklanmoqda...</option>';
+            try {
+                // We use standard test fetching endpoints without admin auth for reading/listening/writing
+                const endpointType = type === 'writing' ? 'writing' : type;
+                const res = await fetch(`/api/${endpointType}-tests`);
+                const tests = await res.json();
+
+                select.innerHTML = tests.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+            } catch (e) {
+                select.innerHTML = '<option value="">Xatolik yuz berdi</option>';
+            }
+        };
+
+        document.getElementById('assign-test-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const classId = document.getElementById('assign-class-id').value;
+            const testType = document.getElementById('assign-test-type').value;
+            const testId = document.getElementById('assign-test-id').value;
+
+            try {
+                const res = await fetch('/api/teacher/assignments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ classId, testType, testId })
+                });
+                if (res.ok) {
+                    closeModal('assign-modal');
+                    alert("Vazifa berildi!");
+                    if (document.getElementById('assignments-sec').classList.contains('active')) {
+                        loadAssignments();
+                    }
+                } else {
+                    alert("Xatolik yuz berdi");
+                }
+            } catch (err) { alert("Server xatosi"); }
+        });
+
+        // Load Assignments
+        async function loadAssignments() {
+            const list = document.getElementById('assignments-list');
+            list.innerHTML = '<p class="loading-msg" style="grid-column: 1/-1;">Yuklanmoqda...</p>';
+            try {
+                const res = await fetch('/api/teacher/assignments', { headers: { 'Authorization': 'Bearer ' + token } });
+                const assignments = await res.json();
+                if (assignments.length === 0) {
+                    list.innerHTML = `<p class="loading-msg" style="grid-column: 1/-1;">Hali hech qanday vazifa berilmagan.</p>`;
+                    return;
+                }
+
+                list.innerHTML = assignments.map(a => `
+                    <div class="class-card">
+                        <div style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; text-transform:uppercase; margin-bottom:5px;">
+                            ${a.test_type} | ${a.class_name}
+                        </div>
+                        <div class="class-name" style="font-size:1.1rem;">${a.test_title || 'Nomsiz Test'}</div>
+                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:15px;">
+                            Sana: ${new Date(a.assigned_at).toLocaleDateString('uz-UZ')}
+                        </div>
+                        <button onclick="deleteAssignment(${a.id})" class="action-btn" style="background:var(--error-color); width:100%;">Bekor Qilish (O'chirish)</button>
+                    </div>
+                `).join('');
+            } catch (e) { list.innerHTML = `<p style="color:var(--error-color);">Xatolik yuz berdi</p>`; }
+        }
+
+        async function deleteAssignment(id) {
+            if (!confirm("Ushbu vazifani darsdan olib tashlamoqchimisiz?")) return;
+            try {
+                const res = await fetch('/api/teacher/assignments/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) loadAssignments();
+            } catch (e) { alert("Xatolik"); }
+        }
+
+        // Load Results (Proctor Details)
+        async function loadResults() {
+            const list = document.getElementById('results-list');
+            list.innerHTML = '<p class="loading-msg">Yuklanmoqda...</p>';
+            try {
+                const res = await fetch('/api/teacher/results', { headers: { 'Authorization': 'Bearer ' + token } });
+                const results = await res.json();
+                if (results.length === 0) {
+                    list.innerHTML = `<p class="loading-msg">Hali o'quvchilar vazifalarni bajarmagan.</p>`;
+                    return;
+                }
+
+                let html = `<table style="width:100%; border-collapse:collapse; background:var(--surface-color); padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                    <tr style="border-bottom:2px solid var(--border-color); text-align:left;">
+                        <th style="padding:15px;">O'quvchi</th>
+                        <th style="padding:15px;">Guruh</th>
+                        <th style="padding:15px;">Test qismi</th>
+                        <th style="padding:15px;">Sana</th>
+                        <th style="padding:15px;">Baho</th>
+                    </tr>`;
+
+                results.forEach(r => {
+                    const date = new Date(r.date).toLocaleString('uz-UZ', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const percent = Math.round((r.correct / r.total) * 100);
+                    let displayScore = `${r.correct}/${r.total} (${percent}%)`;
+                    if (r.correct < 0) displayScore = `<span style="color:#fbbf24;">Tekshirilmoqda...</span>`;
+
+                    html += `
+                        <tr style="border-bottom:1px solid var(--border-color);">
+                            <td style="padding:15px;"><b>${r.student_name}</b> <br><small style="color:var(--text-muted);">${r.student_phone}</small></td>
+                            <td style="padding:15px; color:var(--text-muted);">${r.class_name}</td>
+                            <td style="padding:15px;">${r.section}</td>
+                            <td style="padding:15px; font-size:0.9rem; color:var(--text-muted);">${date}</td>
+                            <td style="padding:15px; font-weight:bold;">${displayScore}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `</table>`;
+                list.innerHTML = html;
+            } catch (e) { list.innerHTML = `<p style="color:var(--error-color);">Xatolik yuz berdi</p>`; }
+        }
+
+        switchView('all-students', document.querySelector('.sidebar-menu a')); // initial
+    </script>
+</body>
+
+</html>
