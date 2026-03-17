@@ -123,6 +123,15 @@ const initSchema = async () => {
             try { await query(`ALTER TABLE users ADD COLUMN plain_password VARCHAR(255) DEFAULT '123456'`); } catch (e) { }
         }
 
+        // Telegram Users Table
+        await query(`CREATE TABLE IF NOT EXISTS telegram_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            chat_id VARCHAR(50) NOT NULL UNIQUE
+        )`);
+
+
+
         // Scores Table
         await query(`CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -222,6 +231,93 @@ const initSchema = async () => {
             await query('INSERT INTO users (name, phone, password, role) VALUES (?, ?, ?, ?)',
                 ['Administrator', adminPhone, hashed, 'admin']);
             console.log('Admin user seeded successfully.');
+        }
+
+        // ==========================================
+        // AUTO-SEED WRITING TASK 1 (AUSTRALIA/MALAYSIA)
+        // ==========================================
+        try {
+            const seedTitle = 'Populations in Australia and Malaysia';
+            const checkRes = await query(`SELECT id FROM writing_tests WHERE title = ?`, [seedTitle]);
+            if (checkRes.rows.length === 0) {
+                const seedContent = `
+        <h2>Writing Task 1</h2>
+        <p><strong>You should spend about 20 minutes on this task.</strong></p>
+        
+        <div style="background:var(--bg-color); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--primary-color);">
+            <p style="font-weight: 500;">
+                The table below gives information about populations in Australia and Malaysia in 1980 and 2002.
+            </p>
+            <p style="font-weight: 600; margin-top: 10px;">
+                Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
+            </p>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid var(--border-color); text-align: center;">
+                <thead style="background: #a4c2f4; color: black; font-weight: bold;">
+                    <tr>
+                        <th style="padding: 12px; border: 1px solid #7ea4e6;">Category</th>
+                        <th style="padding: 12px; border: 1px solid #7ea4e6;">Australia 1980</th>
+                        <th style="padding: 12px; border: 1px solid #7ea4e6;">Australia 2002</th>
+                        <th style="padding: 12px; border: 1px solid #7ea4e6;">Malaysia 1980</th>
+                        <th style="padding: 12px; border: 1px solid #7ea4e6;">Malaysia 2002</th>
+                    </tr>
+                </thead>
+                <tbody style="background: #cfe2f3; color: black;">
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8; text-align: left; font-weight: bold;">Total population (millions)</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">14.7</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">19.6</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">13.7</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">24.3</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8; text-align: left; font-weight: bold;">Male population (%)</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">49.9</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">49.9</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">50.3</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">50.6</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8; text-align: left; font-weight: bold;">Female population (%)</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">50.1</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">50.1</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">49.7</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">49.4</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8; text-align: left; font-weight: bold;">Birth rate (%)</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">1.5</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">1.3</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">3.2</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">2.2</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8; text-align: left; font-weight: bold;">Average annual population growth (%)</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">1.2</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">1.3</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">2.4</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">2.1</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8; text-align: left; font-weight: bold;">Population aged over 65 (%)</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">9.6</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">12.4</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">3.7</td>
+                        <td style="padding: 10px; border: 1px solid #9fc5e8;">4.3</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p style="margin-top: 20px;"><strong>Write at least 150 words.</strong></p>
+                `;
+                await query('INSERT INTO writing_tests (title, content, min_words) VALUES (?, ?, ?)', [seedTitle, seedContent, 150]);
+                console.log("Seeded 'Populations in Australia and Malaysia' Writing Task.");
+            }
+        } catch (e) {
+            console.error("Could not auto-seed writing test:", e);
         }
 
     } catch (err) {
